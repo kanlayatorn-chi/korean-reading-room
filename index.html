@@ -1246,35 +1246,47 @@ function render() {
   const grid = document.getElementById('grid');
   const total = filtered.length;
   const slice = filtered.slice(0, (currentPage + 1) * PAGE_SIZE);
+
   grid.innerHTML = '';
-  if (!slice.length) { grid.innerHTML = '<div class="empty-msg">ไม่พบบทความที่ต้องการ 🔍</div>'; }
-  else {
+
+  if (!slice.length) {
+    grid.innerHTML = '<div class="empty-msg">ไม่พบบทความที่ต้องการ 🔍</div>';
+  } else {
     slice.forEach((a, idx) => {
       const lv = LEVELS[a.level];
       const div = document.createElement('div');
       div.className = 'card';
       div.style.animationDelay = (idx % PAGE_SIZE * 0.03) + 's';
+
       div.innerHTML = `
-  <div class="card-img ${lv.soft}">
-    <span style="font-size:56px">${a.emoji}</span>
-    <span class="card-img-num">#${a.id}</span>
-    <span class="level-badge ${lv.badge}">${lv.label}</span>
-  </div>
-  <div class="card-body">
-    <div class="card-title-kr">${a.titleKr}</div>
-    <div class="card-title-th">${a.titleTh}</div>
-    <div class="card-vocab-preview">${a.vocab.map(v => `<span class="vocab-chip">${v.kr}</span>`).join('')}</div>
-    <div class="card-actions">
-      <span style="font-size:10px;color:var(--muted)">${lv.desc} · ${a.vocab.length} คำ</span>
-      <div class="card-actions-right">
-        <button class="bookmark-btn ${isBookmarked(a.id) ? 'active' : ''}" onclick="toggleBookmark(${a.id}, event)">
-          ${isBookmarked(a.id) ? '★' : '☆'}
-        </button>
-        <button class="speak-btn" data-type="card" onclick="event.stopPropagation();speakText('${a.titleKr.replace(/'/g,"\\'")}',this,0.8)">🔊 ฟัง</button>
-      </div>
-    </div>
-  </div>`;
+        <div class="card-img ${lv.soft}">
+          <span style="font-size:56px">${a.emoji}</span>
+          <span class="card-img-num">#${a.id}</span>
+          <span class="level-badge ${lv.badge}">${lv.label}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-kr">${a.titleKr}</div>
+          <div class="card-title-th">${a.titleTh}</div>
+          <div class="card-vocab-preview">
+            ${a.vocab.map(v => `<span class="vocab-chip">${v.kr}</span>`).join('')}
+          </div>
+          <div class="card-actions">
+            <span style="font-size:10px;color:var(--muted)">${lv.desc} · ${a.vocab.length} คำ</span>
+            <div class="card-actions-right">
+              <button class="bookmark-btn ${isBookmarked(a.id) ? 'active' : ''}" onclick="toggleBookmark(${a.id}, event)">
+                ${isBookmarked(a.id) ? '★' : '☆'}
+              </button>
+              <button class="speak-btn" data-type="card" onclick="event.stopPropagation();speakText('${a.titleKr.replace(/'/g,"\\'")}',this,0.8)">🔊 ฟัง</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      div.onclick = () => openModal(a);
+      grid.appendChild(div);
+    });
   }
+
   document.getElementById('page-count').textContent = `แสดง ${Math.min(slice.length, total)} / ${total} บทความ`;
   document.getElementById('load-more').style.display = slice.length < total ? 'block' : 'none';
 }
