@@ -187,6 +187,49 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
 .search-box { width:100%; max-width:480px; padding:10px 18px; border-radius:100px; border:2px solid var(--border); font-size:14px; font-family:'Nunito',sans-serif; outline:none; background:white; color:var(--text); transition:border-color 0.2s; }
 .search-box:focus { border-color:var(--peach2); }
 
+  /* ── CATEGORY FILTER ── */
+.category-wrap {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 20px;
+}
+
+.category-btn {
+  padding:8px 16px;
+  border-radius:100px;
+  border:2px solid var(--border);
+  background:white;
+  font-size:13px;
+  font-weight:800;
+  font-family:'Nunito',sans-serif;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all 0.18s;
+}
+
+.category-btn:hover {
+  border-color:var(--peach2);
+  color:var(--peach2);
+  transform:translateY(-2px);
+}
+
+.category-btn.active {
+  background:var(--peach2);
+  border-color:var(--peach2);
+  color:white;
+}
+
+/* optional: soft color variants (premium look) */
+.category-btn[data-category="daily"]:hover { border-color:#2aaa7a; color:#2aaa7a; }
+.category-btn[data-category="food"]:hover { border-color:#e06030; color:#e06030; }
+.category-btn[data-category="travel"]:hover { border-color:#3a8ee0; color:#3a8ee0; }
+.category-btn[data-category="study"]:hover { border-color:#7050c0; color:#7050c0; }
+.category-btn[data-category="work"]:hover { border-color:#d09000; color:#d09000; }
+.category-btn[data-category="society"]:hover { border-color:#444; color:#444; }
+  
+
 /* ── GRID ── */
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
 .card { background:white; border-radius:20px; overflow:hidden; border:1.5px solid var(--border); cursor:pointer; transition:transform 0.18s,box-shadow 0.18s; animation:popIn 0.3s ease both; }
@@ -207,6 +250,129 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
 .speak-btn:hover { background:#ffe5df; }
 .speak-btn.speaking { background:var(--peach2); color:white; border-color:var(--peach2); animation:pulse-btn 0.7s ease-in-out infinite alternate; }
 @keyframes pulse-btn { from{transform:scale(1)} to{transform:scale(1.06)} }
+
+  /* ── BOOKMARK + CONTINUE READING ── */
+.top-strip {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+  margin:0 0 18px;
+}
+
+.continue-card,
+.bookmark-bar {
+  background:white;
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:14px 16px;
+  box-shadow:0 8px 20px rgba(200,130,120,0.08);
+}
+
+.continue-card {
+  display:none;
+  cursor:pointer;
+  transition:transform 0.18s, box-shadow 0.18s;
+}
+
+.continue-card.show {
+  display:block;
+}
+
+.continue-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 12px 24px rgba(200,130,120,0.12);
+}
+
+.continue-label,
+.bookmark-label {
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted);
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.continue-title {
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:16px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:3px;
+}
+
+.continue-sub {
+  font-size:13px;
+  color:var(--muted);
+}
+
+.bookmark-bar {
+  display:none;
+}
+
+.bookmark-bar.show {
+  display:block;
+}
+
+.bookmark-list {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.bookmark-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 12px;
+  border-radius:999px;
+  border:1.5px solid #ffd0c8;
+  background:#fff3f0;
+  color:#c04020;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  transition:all 0.18s;
+  font-family:'Nunito',sans-serif;
+}
+
+.bookmark-chip:hover {
+  background:#ffe5df;
+  transform:translateY(-1px);
+}
+
+.bookmark-btn {
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  border:1.5px solid #ffe0d8;
+  background:white;
+  color:#d78a7a;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  transition:all 0.18s;
+  flex-shrink:0;
+}
+
+.bookmark-btn:hover {
+  transform:scale(1.06);
+  border-color:#ffb3a0;
+}
+
+.bookmark-btn.active {
+  background:#fff3f0;
+  color:#e06030;
+  border-color:#ffb3a0;
+}
+
+.card-actions-right {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
 
 /* ── MODAL ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(80,40,30,0.4); z-index:1000; align-items:center; justify-content:center; padding:16px; }
@@ -338,30 +504,55 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   </div>
 
   <!-- READ PANEL -->
-  <div id="read-panel">
-    <div class="level-section">
-      <div class="section-label">เลือกระดับที่ต้องการ</div>
-      <div class="level-btns">
-        <div class="level-row">
-          <button class="lvl-btn active" data-level="all">🌈 ทั้งหมด</button>
-          <button class="lvl-btn" data-level="beginner">🌱 Beginner <span class="lvl-sub">ม.ต้น 1A</span></button>
-          <button class="lvl-btn" data-level="elementary">🌿 Elementary <span class="lvl-sub">1B–2A</span></button>
-          <button class="lvl-btn" data-level="intermediate">🌻 Intermediate <span class="lvl-sub">2B–3A</span></button>
-        </div>
-        <div class="level-row">
-          <button class="lvl-btn" data-level="topik1">🌺 TOPIK I <span class="lvl-sub">Level 1–2</span></button>
-          <button class="lvl-btn" data-level="topik2">💎 TOPIK II <span class="lvl-sub">Level 3–6</span></button>
-        </div>
+<div id="read-panel">
+  <div class="level-section">
+    <div class="section-label">เลือกระดับที่ต้องการ</div>
+    <div class="level-btns">
+      <div class="level-row">
+        <button class="lvl-btn active" data-level="all">🌈 ทั้งหมด</button>
+        <button class="lvl-btn" data-level="beginner">🌱 Beginner <span class="lvl-sub">ม.ต้น 1A</span></button>
+        <button class="lvl-btn" data-level="elementary">🌿 Elementary <span class="lvl-sub">1B–2A</span></button>
+        <button class="lvl-btn" data-level="intermediate">🌻 Intermediate <span class="lvl-sub">2B–3A</span></button>
+      </div>
+      <div class="level-row">
+        <button class="lvl-btn" data-level="topik1">🌺 TOPIK I <span class="lvl-sub">Level 1–2</span></button>
+        <button class="lvl-btn" data-level="topik2">💎 TOPIK II <span class="lvl-sub">Level 3–6</span></button>
       </div>
     </div>
-    <div class="search-wrap">
-      <input class="search-box" id="search" placeholder="🔍 ค้นหาเรื่อง / คำศัพท์ / หัวข้อ...">
-    </div>
-    <div class="grid" id="grid"></div>
-    <div class="page-count" id="page-count"></div>
-    <button class="load-more-btn" id="load-more" style="display:none">โหลดเพิ่ม ✨</button>
-    <div class="footer-kr" style="margin-top:32px">한국어 공부 화이팅! 🌸</div>
   </div>
+
+  <div class="search-wrap">
+    <input class="search-box" id="search" placeholder="🔍 ค้นหาเรื่อง / คำศัพท์ / หัวข้อ...">
+  </div>
+
+  <div class="category-wrap">
+    <button class="category-btn active" data-category="all">✨ ทั้งหมด</button>
+    <button class="category-btn" data-category="daily">🌿 ชีวิตประจำวัน</button>
+    <button class="category-btn" data-category="food">🍚 อาหาร</button>
+    <button class="category-btn" data-category="travel">✈️ ท่องเที่ยว</button>
+    <button class="category-btn" data-category="study">📚 การเรียน</button>
+    <button class="category-btn" data-category="work">💼 การทำงาน</button>
+    <button class="category-btn" data-category="society">🌏 สังคม</button>
+  </div>
+
+  <div class="top-strip">
+    <div class="continue-card" id="continue-card">
+      <div class="continue-label">Continue Reading</div>
+      <div class="continue-title" id="continue-title"></div>
+      <div class="continue-sub" id="continue-sub"></div>
+    </div>
+
+    <div class="bookmark-bar" id="bookmark-bar">
+      <div class="bookmark-label">Bookmarked Articles</div>
+      <div class="bookmark-list" id="bookmark-list"></div>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="page-count" id="page-count"></div>
+  <button class="load-more-btn" id="load-more" style="display:none">โหลดเพิ่ม ✨</button>
+  <div class="footer-kr" style="margin-top:32px">한국어 공부 화이팅! 🌸</div>
+</div>
 
   <!-- WRITE PANEL -->
   <div id="write-panel">
@@ -370,8 +561,8 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
       <p>เลือกโหมดและระดับ แล้วเขียน — AI จะช่วยตรวจให้ค่ะ</p>
     </div>
     <div class="write-mode-btns">
-      <button class="write-mode-btn active" onclick="setWriteMode('sentence')">📝 เขียนประโยค</button>
-      <button class="write-mode-btn" onclick="setWriteMode('essay')">📄 เขียนเรียงความ</button>
+      <button class="write-mode-btn active" onclick="setWriteMode('sentence', event)">📝 เขียนประโยค</button>
+      <button class="write-mode-btn" onclick="setWriteMode('essay', event)">📄 เขียนเรียงความ</button>
     </div>
     <div class="write-level-row">
       <button class="lvl-btn active" data-wlevel="beginner">🌱 Beginner</button>
@@ -461,129 +652,408 @@ const LEVELS = {
 };
 
 const ARTICLES_DATA = [
-  { id:1,  level:'beginner',     emoji:'🐱', titleKr:'고양이',           titleTh:'แมว',
+  { id:1, level:'beginner', category:'daily', emoji:'🐱', titleKr:'고양이', titleTh:'แมว',
     story:'저는 고양이가 있어요. 이름은 나비예요. 나비는 하얗고 귀여워요. 나비는 우유를 좋아해요.',
     storyTh:'ฉันมีแมว ชื่อนาบี นาบีสีขาวและน่ารัก นาบีชอบนม',
     vocab:[{kr:'고양이',rom:'go-yang-i',th:'แมว'},{kr:'이름',rom:'i-reum',th:'ชื่อ'},{kr:'하얗다',rom:'ha-ya-ta',th:'สีขาว'},{kr:'귀엽다',rom:'gwi-yeop-da',th:'น่ารัก'},{kr:'우유',rom:'u-yu',th:'นม'},{kr:'좋아하다',rom:'jo-a-ha-da',th:'ชอบ'}] },
-  { id:2,  level:'beginner',     emoji:'🍎', titleKr:'과일',             titleTh:'ผลไม้',
+
+  { id:2, level:'beginner', category:'food', emoji:'🍎', titleKr:'과일', titleTh:'ผลไม้',
     story:'사과가 빨개요. 바나나가 노래요. 저는 과일을 좋아해요. 매일 먹어요.',
     storyTh:'แอปเปิ้ลสีแดง กล้วยสีเหลือง ฉันชอบผลไม้ กินทุกวัน',
     vocab:[{kr:'사과',rom:'sa-gwa',th:'แอปเปิ้ล'},{kr:'바나나',rom:'ba-na-na',th:'กล้วย'},{kr:'빨갛다',rom:'ppal-ga-ta',th:'สีแดง'},{kr:'노랗다',rom:'no-ra-ta',th:'สีเหลือง'},{kr:'과일',rom:'gwa-il',th:'ผลไม้'},{kr:'매일',rom:'mae-il',th:'ทุกวัน'}] },
-  { id:3,  level:'beginner',     emoji:'👨‍👩‍👧', titleKr:'우리 가족',       titleTh:'ครอบครัวของฉัน',
+
+  { id:3, level:'beginner', category:'daily', emoji:'👨‍👩‍👧', titleKr:'우리 가족', titleTh:'ครอบครัวของฉัน',
     story:'우리 가족은 넷이에요. 아빠, 엄마, 오빠, 그리고 저예요. 우리는 서울에 살아요.',
     storyTh:'ครอบครัวของฉันมี 4 คน คือ พ่อ แม่ พี่ชาย และฉัน เราอาศัยอยู่ในโซล',
     vocab:[{kr:'가족',rom:'ga-jok',th:'ครอบครัว'},{kr:'아빠',rom:'a-ppa',th:'พ่อ'},{kr:'엄마',rom:'eom-ma',th:'แม่'},{kr:'오빠',rom:'o-ppa',th:'พี่ชาย (ผู้หญิงเรียก)'},{kr:'살다',rom:'sal-da',th:'อาศัยอยู่'},{kr:'서울',rom:'seo-ul',th:'โซล'}] },
-  { id:4,  level:'beginner',     emoji:'☀️', titleKr:'날씨',             titleTh:'อากาศ',
+
+  { id:4, level:'beginner', category:'daily', emoji:'☀️', titleKr:'날씨', titleTh:'อากาศ',
     story:'오늘은 날씨가 맑아요. 하늘이 파래요. 바람이 불어요. 기분이 좋아요.',
     storyTh:'วันนี้อากาศแจ่มใส ท้องฟ้าสีฟ้า ลมพัด รู้สึกดีมาก',
     vocab:[{kr:'날씨',rom:'nal-ssi',th:'อากาศ'},{kr:'맑다',rom:'mal-ta',th:'แจ่มใส'},{kr:'하늘',rom:'ha-neul',th:'ท้องฟ้า'},{kr:'파랗다',rom:'pa-ra-ta',th:'สีฟ้า'},{kr:'바람',rom:'ba-ram',th:'ลม'},{kr:'기분',rom:'gi-bun',th:'อารมณ์ / ความรู้สึก'}] },
-  { id:5,  level:'beginner',     emoji:'🏫', titleKr:'학교',             titleTh:'โรงเรียน',
+
+  { id:5, level:'beginner', category:'study', emoji:'🏫', titleKr:'학교', titleTh:'โรงเรียน',
     story:'저는 학교에 가요. 친구들을 만나요. 공부가 재미있어요. 선생님이 친절해요.',
     storyTh:'ฉันไปโรงเรียน เจอเพื่อนๆ การเรียนสนุก คุณครูใจดี',
     vocab:[{kr:'학교',rom:'hak-gyo',th:'โรงเรียน'},{kr:'친구',rom:'chin-gu',th:'เพื่อน'},{kr:'만나다',rom:'man-na-da',th:'พบ/เจอ'},{kr:'공부',rom:'gong-bu',th:'การเรียน'},{kr:'재미있다',rom:'jae-mi-it-da',th:'สนุก/น่าสนใจ'},{kr:'선생님',rom:'seon-saeng-nim',th:'คุณครู'}] },
-  { id:6,  level:'beginner',     emoji:'🍚', titleKr:'밥',               titleTh:'ข้าว',
+
+  { id:6, level:'beginner', category:'food', emoji:'🍚', titleKr:'밥', titleTh:'ข้าว',
     story:'저는 밥을 먹어요. 김치도 있어요. 맛있어요. 배가 불러요.',
     storyTh:'ฉันกินข้าว มีกิมจิด้วย อร่อยมาก อิ่มแล้ว',
     vocab:[{kr:'밥',rom:'bap',th:'ข้าว'},{kr:'먹다',rom:'meok-da',th:'กิน'},{kr:'김치',rom:'gim-chi',th:'กิมจิ'},{kr:'맛있다',rom:'ma-sit-da',th:'อร่อย'},{kr:'배',rom:'bae',th:'ท้อง'},{kr:'배부르다',rom:'bae-bu-reu-da',th:'อิ่ม'}] },
-  { id:7,  level:'beginner',     emoji:'🐶', titleKr:'강아지',           titleTh:'ลูกหมา',
+
+  { id:7, level:'beginner', category:'daily', emoji:'🐶', titleKr:'강아지', titleTh:'ลูกหมา',
     story:'공원에 강아지가 있어요. 강아지가 뛰어요. 정말 귀여워요. 같이 놀아요.',
     storyTh:'มีลูกหมาในสวนสาธารณะ ลูกหมาวิ่งเล่น น่ารักมาก เล่นด้วยกัน',
     vocab:[{kr:'강아지',rom:'gang-a-ji',th:'ลูกหมา'},{kr:'공원',rom:'gong-won',th:'สวนสาธารณะ'},{kr:'뛰다',rom:'dtwi-da',th:'วิ่ง'},{kr:'정말',rom:'jeong-mal',th:'จริงๆ'},{kr:'귀엽다',rom:'gwi-yeop-da',th:'น่ารัก'},{kr:'같이',rom:'ga-chi',th:'ด้วยกัน'}] },
-  { id:8,  level:'beginner',     emoji:'🎵', titleKr:'음악',             titleTh:'ดนตรี',
+
+  { id:8, level:'beginner', category:'daily', emoji:'🎵', titleKr:'음악', titleTh:'ดนตรี',
     story:'저는 음악을 좋아해요. 노래를 불러요. 기타도 쳐요. 행복해요.',
     storyTh:'ฉันชอบดนตรี ร้องเพลง เล่นกีตาร์ด้วย มีความสุข',
     vocab:[{kr:'음악',rom:'eum-ak',th:'ดนตรี'},{kr:'노래',rom:'no-rae',th:'เพลง'},{kr:'부르다',rom:'bu-reu-da',th:'ร้อง'},{kr:'기타',rom:'gi-ta',th:'กีตาร์'},{kr:'치다',rom:'chi-da',th:'เล่น (ดนตรี)'},{kr:'행복하다',rom:'haeng-bok-ha-da',th:'มีความสุข'}] },
-  { id:9,  level:'elementary',   emoji:'🚌', titleKr:'버스 여행',         titleTh:'การเดินทางด้วยรถบัส',
+
+  { id:9, level:'elementary', category:'travel', emoji:'🚌', titleKr:'버스 여행', titleTh:'การเดินทางด้วยรถบัส',
     story:'저는 오늘 버스를 타고 시장에 갔어요. 버스에는 사람이 많았어요. 창문 밖으로 도시 풍경이 예뻤어요. 시장에서 채소를 샀어요.',
     storyTh:'วันนี้ฉันนั่งรถบัสไปตลาด บนรถมีคนเยอะ วิวเมืองนอกหน้าต่างสวยมาก ซื้อผักที่ตลาด',
     vocab:[{kr:'버스',rom:'beo-seu',th:'รถบัส'},{kr:'타다',rom:'ta-da',th:'ขึ้น/นั่ง (ยานพาหนะ)'},{kr:'시장',rom:'si-jang',th:'ตลาด'},{kr:'창문',rom:'chang-mun',th:'หน้าต่าง'},{kr:'풍경',rom:'pung-gyeong',th:'วิว/ทิวทัศน์'},{kr:'채소',rom:'chae-so',th:'ผัก'},{kr:'사다',rom:'sa-da',th:'ซื้อ'}] },
-  { id:10, level:'elementary',   emoji:'☕', titleKr:'카페에서',           titleTh:'ที่คาเฟ่',
+
+  { id:10, level:'elementary', category:'food', emoji:'☕', titleKr:'카페에서', titleTh:'ที่คาเฟ่',
     story:'친구와 카페에 갔어요. 아메리카노 두 잔을 주문했어요. 우리는 오랜만에 만나서 이야기를 많이 했어요. 시간이 빨리 지나갔어요.',
     storyTh:'ไปคาเฟ่กับเพื่อน สั่งอเมริกาโน่สองแก้ว คุยกันเยอะเพราะนานๆ เจอกันที เวลาผ่านไปไว',
     vocab:[{kr:'카페',rom:'ka-pe',th:'คาเฟ่'},{kr:'주문하다',rom:'ju-mun-ha-da',th:'สั่ง'},{kr:'오랜만에',rom:'o-raen-man-e',th:'นานๆ ที'},{kr:'이야기',rom:'i-ya-gi',th:'การสนทนา'},{kr:'빨리',rom:'ppal-li',th:'เร็ว'},{kr:'지나가다',rom:'ji-na-ga-da',th:'ผ่านไป'}] },
-  { id:11, level:'elementary',   emoji:'🌧️', titleKr:'비 오는 날',        titleTh:'วันที่ฝนตก',
+
+  { id:11, level:'elementary', category:'daily', emoji:'🌧️', titleKr:'비 오는 날', titleTh:'วันที่ฝนตก',
     story:'아침부터 비가 왔어요. 우산을 챙겨서 다행이에요. 빗소리를 들으면서 책을 읽었어요. 비 오는 날은 따뜻한 음식이 먹고 싶어요.',
     storyTh:'ฝนตกตั้งแต่เช้า โชคดีที่พกร่มมา อ่านหนังสือฟังเสียงฝน วันที่ฝนตกอยากกินอาหารอุ่นๆ',
     vocab:[{kr:'비',rom:'bi',th:'ฝน'},{kr:'우산',rom:'u-san',th:'ร่ม'},{kr:'챙기다',rom:'chaeng-gi-da',th:'เตรียม/พก'},{kr:'다행이다',rom:'da-haeng-i-da',th:'โชคดี'},{kr:'빗소리',rom:'bit-so-ri',th:'เสียงฝน'},{kr:'따뜻하다',rom:'tta-tteus-ha-da',th:'อบอุ่น'}] },
-  { id:12, level:'elementary',   emoji:'🎂', titleKr:'생일 파티',          titleTh:'ปาร์ตี้วันเกิด',
+
+  { id:12, level:'elementary', category:'daily', emoji:'🎂', titleKr:'생일 파티', titleTh:'ปาร์ตี้วันเกิด',
     story:'오늘은 제 생일이에요. 친구들이 깜짝 파티를 해줬어요. 케이크에 초를 불었어요. 선물도 많이 받았어요. 정말 행복한 하루였어요.',
     storyTh:'วันนี้เป็นวันเกิดฉัน เพื่อนๆ จัดปาร์ตี้เซอร์ไพรส์ให้ เป่าเทียนบนเค้ก ได้รับของขวัญเยอะมาก เป็นวันที่มีความสุขมาก',
     vocab:[{kr:'생일',rom:'saeng-il',th:'วันเกิด'},{kr:'깜짝',rom:'kkam-jjak',th:'เซอร์ไพรส์'},{kr:'케이크',rom:'ke-i-keu',th:'เค้ก'},{kr:'초',rom:'cho',th:'เทียน'},{kr:'선물',rom:'seon-mul',th:'ของขวัญ'},{kr:'받다',rom:'bat-da',th:'รับ'}] },
-  { id:13, level:'elementary',   emoji:'🏕️', titleKr:'주말 캠핑',          titleTh:'แคมป์ปิ้งวันหยุด',
+
+  { id:13, level:'elementary', category:'travel', emoji:'🏕️', titleKr:'주말 캠핑', titleTh:'แคมป์ปิ้งวันหยุด',
     story:'가족과 함께 캠핑을 갔어요. 텐트를 치고 불을 피웠어요. 별이 정말 많았어요. 자연 속에서 하루를 보냈어요.',
     storyTh:'ไปแคมป์ปิ้งกับครอบครัว ตั้งเต็นท์และก่อกองไฟ ดาวเยอะมาก ใช้เวลาหนึ่งวันในธรรมชาติ',
     vocab:[{kr:'캠핑',rom:'kaem-ping',th:'แคมป์ปิ้ง'},{kr:'텐트',rom:'ten-teu',th:'เต็นท์'},{kr:'불',rom:'bul',th:'ไฟ'},{kr:'별',rom:'byeol',th:'ดาว'},{kr:'자연',rom:'ja-yeon',th:'ธรรมชาติ'},{kr:'보내다',rom:'bo-nae-da',th:'ใช้เวลา/ส่ง'}] },
-  { id:14, level:'elementary',   emoji:'📚', titleKr:'도서관에서',          titleTh:'ที่ห้องสมุด',
+
+  { id:14, level:'elementary', category:'study', emoji:'📚', titleKr:'도서관에서', titleTh:'ที่ห้องสมุด',
     story:'오늘 도서관에서 공부했어요. 조용해서 집중이 잘 됐어요. 역사책 한 권을 빌렸어요. 다음 주까지 읽어야 해요.',
     storyTh:'วันนี้เรียนที่ห้องสมุด เงียบดีจนตั้งสมาธิได้ดี ยืมหนังสือประวัติศาสตร์หนึ่งเล่ม ต้องอ่านให้เสร็จภายในสัปดาห์หน้า',
     vocab:[{kr:'도서관',rom:'do-seo-gwan',th:'ห้องสมุด'},{kr:'조용하다',rom:'jo-yong-ha-da',th:'เงียบ'},{kr:'집중',rom:'jip-jung',th:'สมาธิ'},{kr:'역사',rom:'yeok-sa',th:'ประวัติศาสตร์'},{kr:'권',rom:'gwon',th:'เล่ม (ลักษณนาม)'},{kr:'빌리다',rom:'bil-li-da',th:'ยืม'}] },
-  { id:15, level:'elementary',   emoji:'🌺', titleKr:'봄 소풍',            titleTh:'ทัศนศึกษาฤดูใบไม้ผลิ',
+
+  { id:15, level:'elementary', category:'travel', emoji:'🌺', titleKr:'봄 소풍', titleTh:'ทัศนศึกษาฤดูใบไม้ผลิ',
     story:'봄이 왔어요. 벚꽃이 피었어요. 친구들과 공원에서 소풍을 즐겼어요. 도시락을 먹으면서 이야기했어요.',
     storyTh:'ฤดูใบไม้ผลิมาแล้ว ดอกซากุระบาน สนุกกับการปิกนิกที่สวนกับเพื่อนๆ คุยกันพลางกินข้าวกล่อง',
     vocab:[{kr:'봄',rom:'bom',th:'ฤดูใบไม้ผลิ'},{kr:'벚꽃',rom:'beot-kkot',th:'ดอกซากุระ'},{kr:'피다',rom:'pi-da',th:'บาน'},{kr:'소풍',rom:'so-pung',th:'ปิกนิก'},{kr:'즐기다',rom:'jeul-gi-da',th:'สนุก/เพลิดเพลิน'},{kr:'도시락',rom:'do-si-rak',th:'ข้าวกล่อง'}] },
-  { id:16, level:'intermediate', emoji:'🏙️', titleKr:'서울의 밤',           titleTh:'คืนที่โซล',
+
+  { id:16, level:'intermediate', category:'travel', emoji:'🏙️', titleKr:'서울의 밤', titleTh:'คืนที่โซล',
     story:'서울의 밤은 화려하고 아름답습니다. 한강 변에 앉아서 야경을 감상했습니다. 불빛이 물에 반사되어 마치 별처럼 반짝였습니다. 이 도시의 에너지가 느껴졌습니다.',
     storyTh:'คืนที่โซลสวยงามและหรูหรา นั่งริมแม่น้ำฮันดูวิวกลางคืน แสงไฟสะท้อนน้ำระยิบระยับราวกับดาว รู้สึกถึงพลังงานของเมืองนี้',
     vocab:[{kr:'화려하다',rom:'hwa-ryeo-ha-da',th:'หรูหรา/อลังการ'},{kr:'야경',rom:'ya-gyeong',th:'วิวกลางคืน'},{kr:'감상하다',rom:'gam-sang-ha-da',th:'ชื่นชม'},{kr:'반사되다',rom:'ban-sa-doe-da',th:'สะท้อน'},{kr:'반짝이다',rom:'ban-jjak-i-da',th:'ระยิบระยับ'},{kr:'에너지',rom:'e-neo-ji',th:'พลังงาน'},{kr:'느끼다',rom:'neu-kki-da',th:'รู้สึก'}] },
-  { id:17, level:'intermediate', emoji:'👩‍🍳', titleKr:'요리 수업',          titleTh:'ชั้นเรียนทำอาหาร',
+
+  { id:17, level:'intermediate', category:'food', emoji:'👩‍🍳', titleKr:'요리 수업', titleTh:'ชั้นเรียนทำอาหาร',
     story:'처음으로 요리 수업을 들었습니다. 선생님이 김치찌개 만드는 법을 가르쳐 주셨습니다. 재료를 손질하고 순서대로 따라 했습니다. 생각보다 어렵지 않아서 뿌듯했습니다.',
     storyTh:'เรียนทำอาหารเป็นครั้งแรก ครูสอนวิธีทำแกงกิมจิ เตรียมวัตถุดิบแล้วทำตามขั้นตอน ง่ายกว่าที่คิดจึงรู้สึกภูมิใจ',
     vocab:[{kr:'요리',rom:'yo-ri',th:'การทำอาหาร'},{kr:'수업',rom:'su-eop',th:'ชั้นเรียน'},{kr:'재료',rom:'jae-ryo',th:'วัตถุดิบ'},{kr:'손질하다',rom:'son-jil-ha-da',th:'เตรียม/ตกแต่ง'},{kr:'순서',rom:'sun-seo',th:'ลำดับ/ขั้นตอน'},{kr:'뿌듯하다',rom:'ppu-deut-ha-da',th:'ภูมิใจ'}] },
-  { id:18, level:'intermediate', emoji:'✈️', titleKr:'첫 해외여행',         titleTh:'การเดินทางต่างประเทศครั้งแรก',
+
+  { id:18, level:'intermediate', category:'travel', emoji:'✈️', titleKr:'첫 해외여행', titleTh:'การเดินทางต่างประเทศครั้งแรก',
     story:'처음으로 혼자 해외여행을 떠났습니다. 비행기 안에서 설레는 마음이 가득했습니다. 낯선 도시에서 길을 잃기도 했지만, 그것도 좋은 경험이었습니다. 여행을 통해 많이 성장했습니다.',
     storyTh:'ออกเดินทางต่างประเทศคนเดียวเป็นครั้งแรก ในเครื่องบินรู้สึกตื่นเต้นมาก หลงทางในเมืองแปลกหน้าแต่ก็เป็นประสบการณ์ดี เติบโตขึ้นมากจากการเดินทาง',
     vocab:[{kr:'해외여행',rom:'hae-oe-yeo-haeng',th:'การเดินทางต่างประเทศ'},{kr:'떠나다',rom:'tteo-na-da',th:'ออกเดินทาง'},{kr:'설레다',rom:'seol-le-da',th:'ตื่นเต้น/ใจเต้น'},{kr:'낯설다',rom:'nat-seol-da',th:'ไม่คุ้นเคย'},{kr:'경험',rom:'gyeong-heom',th:'ประสบการณ์'},{kr:'성장하다',rom:'seong-jang-ha-da',th:'เติบโต'}] },
-  { id:19, level:'intermediate', emoji:'🎭', titleKr:'뮤지컬 관람',          titleTh:'ชมมิวสิคัล',
+
+  { id:19, level:'intermediate', category:'daily', emoji:'🎭', titleKr:'뮤지컬 관람', titleTh:'ชมมิวสิคัล',
     story:'친구의 권유로 처음으로 뮤지컬을 보았습니다. 화려한 무대와 배우들의 열정적인 연기에 감동받았습니다. 음악이 끝나고도 여운이 오래 남았습니다. 앞으로도 자주 보고 싶습니다.',
     storyTh:'ดูมิวสิคัลเป็นครั้งแรกตามคำแนะนำของเพื่อน ประทับใจมากกับเวทีที่หรูหราและการแสดงอันเร่าร้อน ความรู้สึกยังคงอยู่นานหลังดนตรีจบ อยากดูบ่อยๆ',
     vocab:[{kr:'권유',rom:'gwon-yu',th:'การแนะนำ/ชักชวน'},{kr:'무대',rom:'mu-dae',th:'เวที'},{kr:'배우',rom:'bae-u',th:'นักแสดง'},{kr:'열정적',rom:'yeol-jeong-jeok',th:'เร่าร้อน'},{kr:'감동받다',rom:'gam-dong-bat-da',th:'ประทับใจ'},{kr:'여운',rom:'yeo-un',th:'ความรู้สึกที่ยังคงอยู่'}] },
-  { id:20, level:'intermediate', emoji:'🌄', titleKr:'산 등반',             titleTh:'ปีนภูเขา',
+
+  { id:20, level:'intermediate', category:'travel', emoji:'🌄', titleKr:'산 등반', titleTh:'ปีนภูเขา',
     story:'이른 아침에 산에 오르기 시작했습니다. 숨이 차고 힘들었지만 포기하지 않았습니다. 정상에 도착했을 때 눈앞에 펼쳐진 경치는 모든 고생을 잊게 해주었습니다.',
     storyTh:'เริ่มปีนเขาแต่เช้าตรู่ แม้จะหอบและเหนื่อย แต่ไม่ยอมแพ้ เมื่อถึงยอดเขา วิวที่เปิดออกตรงหน้าทำให้ลืมความเหนื่อยทั้งหมด',
     vocab:[{kr:'등반',rom:'deung-ban',th:'การปีนป่าย'},{kr:'숨이 차다',rom:'sum-i cha-da',th:'หายใจไม่ทัน/หอบ'},{kr:'포기하다',rom:'po-gi-ha-da',th:'ยอมแพ้'},{kr:'정상',rom:'jeong-sang',th:'ยอดเขา'},{kr:'경치',rom:'gyeong-chi',th:'ทิวทัศน์'},{kr:'펼치다',rom:'pyeol-chi-da',th:'เปิดออก/แผ่'}] },
-  { id:21, level:'topik1',       emoji:'🏢', titleKr:'직장 생활',           titleTh:'ชีวิตการทำงาน',
+
+  { id:21, level:'topik1', category:'work', emoji:'🏢', titleKr:'직장 생활', titleTh:'ชีวิตการทำงาน',
     story:'새로운 직장에 입사한 지 세 달이 지났습니다. 처음에는 모르는 것도 많고 실수도 많았지만, 동료들의 도움으로 점점 적응하고 있습니다. 열심히 노력하면 반드시 성장할 수 있다고 믿습니다.',
     storyTh:'ผ่านไปสามเดือนหลังเข้างานใหม่ ตอนแรกไม่รู้หลายอย่างและผิดพลาดบ่อย แต่ด้วยความช่วยเหลือของเพื่อนร่วมงาน ค่อยๆ ปรับตัวได้',
     vocab:[{kr:'직장',rom:'jik-jang',th:'ที่ทำงาน'},{kr:'입사하다',rom:'ip-sa-ha-da',th:'เข้าทำงาน'},{kr:'실수',rom:'sil-su',th:'ความผิดพลาด'},{kr:'동료',rom:'dong-ryo',th:'เพื่อนร่วมงาน'},{kr:'적응하다',rom:'jeok-eung-ha-da',th:'ปรับตัว'},{kr:'반드시',rom:'ban-deu-si',th:'อย่างแน่นอน'}] },
-  { id:22, level:'topik1',       emoji:'💡', titleKr:'환경 문제',           titleTh:'ปัญหาสิ่งแวดล้อม',
+
+  { id:22, level:'topik1', category:'society', emoji:'💡', titleKr:'환경 문제', titleTh:'ปัญหาสิ่งแวดล้อม',
     story:'최근 환경 문제가 심각해지고 있습니다. 지구 온난화로 인해 기온이 상승하고 있으며, 해수면도 점차 높아지고 있습니다. 우리 모두가 일상에서 작은 노력을 기울여야 합니다.',
     storyTh:'ปัจจุบันปัญหาสิ่งแวดล้อมรุนแรงขึ้น อุณหภูมิสูงขึ้นเนื่องจากภาวะโลกร้อน และระดับน้ำทะเลก็สูงขึ้นเรื่อยๆ พวกเราทุกคนต้องใส่ใจในชีวิตประจำวัน',
     vocab:[{kr:'환경',rom:'hwan-gyeong',th:'สิ่งแวดล้อม'},{kr:'심각하다',rom:'sim-gak-ha-da',th:'รุนแรง/ร้ายแรง'},{kr:'온난화',rom:'on-nan-hwa',th:'ภาวะโลกร้อน'},{kr:'기온',rom:'gi-on',th:'อุณหภูมิ'},{kr:'해수면',rom:'hae-su-myeon',th:'ระดับน้ำทะเล'},{kr:'기울이다',rom:'gi-u-ri-da',th:'ใส่ใจ/ทุ่มเท'}] },
-  { id:23, level:'topik1',       emoji:'📱', titleKr:'스마트폰의 영향',      titleTh:'อิทธิพลของสมาร์ทโฟน',
+
+  { id:23, level:'topik1', category:'society', emoji:'📱', titleKr:'스마트폰의 영향', titleTh:'อิทธิพลของสมาร์ทโฟน',
     story:'스마트폰은 우리 생활을 편리하게 해주지만 부작용도 있습니다. 과도한 사용으로 수면 장애나 집중력 저하가 생길 수 있습니다. 적절한 사용 습관이 중요합니다.',
     storyTh:'สมาร์ทโฟนทำให้ชีวิตสะดวกขึ้น แต่ก็มีผลข้างเคียง การใช้มากเกินไปอาจทำให้นอนไม่หลับหรือสมาธิลดลง นิสัยการใช้ที่เหมาะสมเป็นเรื่องสำคัญ',
     vocab:[{kr:'편리하다',rom:'pyeol-li-ha-da',th:'สะดวก'},{kr:'부작용',rom:'bu-jak-yong',th:'ผลข้างเคียง'},{kr:'과도하다',rom:'gwa-do-ha-da',th:'มากเกินไป'},{kr:'수면 장애',rom:'su-myeon jang-ae',th:'การนอนไม่หลับ'},{kr:'집중력',rom:'jip-jung-ryeok',th:'สมาธิ'},{kr:'습관',rom:'seup-gwan',th:'นิสัย/ความเคยชิน'}] },
-  { id:24, level:'topik1',       emoji:'🎓', titleKr:'유학 결심',           titleTh:'ตัดสินใจเรียนต่อต่างประเทศ',
+
+  { id:24, level:'topik1', category:'study', emoji:'🎓', titleKr:'유학 결심', titleTh:'ตัดสินใจเรียนต่อต่างประเทศ',
     story:'오랫동안 고민하던 끝에 유학을 결심했습니다. 가족들은 처음에 반대했지만 제 의지를 보고 결국 지지해주었습니다. 새로운 환경에서의 도전이 두렵지만 기대가 더 큽니다.',
     storyTh:'ตัดสินใจเรียนต่อต่างประเทศหลังคิดนานมาก ครอบครัวคัดค้านตอนแรกแต่พอเห็นความตั้งใจก็สนับสนุน การท้าทายในสิ่งแวดล้อมใหม่น่ากลัวแต่รู้สึกตื่นเต้นมากกว่า',
     vocab:[{kr:'고민하다',rom:'go-min-ha-da',th:'คิดหนัก/วิตกกังวล'},{kr:'결심하다',rom:'gyeol-sim-ha-da',th:'ตัดสินใจ'},{kr:'반대하다',rom:'ban-dae-ha-da',th:'คัดค้าน'},{kr:'의지',rom:'eui-ji',th:'ความตั้งใจ'},{kr:'도전',rom:'do-jeon',th:'การท้าทาย'},{kr:'기대',rom:'gi-dae',th:'ความคาดหวัง'}] },
-  { id:25, level:'topik2',       emoji:'🧠', titleKr:'인공지능의 미래',      titleTh:'อนาคตของปัญญาประดิษฐ์',
+
+  { id:25, level:'topik2', category:'society', emoji:'🧠', titleKr:'인공지능의 미래', titleTh:'อนาคตของปัญญาประดิษฐ์',
     story:'인공지능 기술이 급속도로 발전하면서 다양한 산업 분야에서 활용되고 있습니다. 하지만 이로 인한 일자리 감소와 개인 정보 보호 문제는 사회적으로 심층적인 논의가 필요합니다. 기술의 혜택을 누리면서도 윤리적 기준을 마련하는 것이 중요합니다.',
     storyTh:'เทคโนโลยีปัญญาประดิษฐ์พัฒนาอย่างรวดเร็วและถูกนำไปใช้ในหลายอุตสาหกรรม แต่ปัญหาการลดลงของงานและการคุ้มครองข้อมูลส่วนตัวต้องการการอภิปรายอย่างลึกซึ้งในสังคม',
     vocab:[{kr:'인공지능',rom:'in-gong-ji-neung',th:'ปัญญาประดิษฐ์'},{kr:'급속도',rom:'geup-sok-do',th:'อย่างรวดเร็ว'},{kr:'활용되다',rom:'hwal-lyong-doe-da',th:'ถูกนำไปใช้'},{kr:'일자리',rom:'il-ja-ri',th:'ตำแหน่งงาน'},{kr:'윤리',rom:'yul-li',th:'จริยธรรม'},{kr:'마련하다',rom:'ma-ryeon-ha-da',th:'กำหนด/จัดให้มี'},{kr:'혜택',rom:'hye-taek',th:'ผลประโยชน์/สิทธิประโยชน์'}] },
-  { id:26, level:'topik2',       emoji:'🌍', titleKr:'세계화의 빛과 그림자', titleTh:'แสงและเงาของโลกาภิวัตน์',
+
+  { id:26, level:'topik2', category:'society', emoji:'🌍', titleKr:'세계화의 빛과 그림자', titleTh:'แสงและเงาของโลกาภิวัตน์',
     story:'세계화는 경제적 성장과 문화 교류라는 긍정적인 측면을 가져왔습니다. 그러나 한편으로는 경제적 불평등이 심화되고, 전통 문화가 소멸할 위기에 처하기도 합니다.',
     storyTh:'โลกาภิวัตน์นำมาซึ่งการเติบโตทางเศรษฐกิจและการแลกเปลี่ยนวัฒนธรรม แต่ในอีกด้านหนึ่งความไม่เท่าเทียมทางเศรษฐกิจก็ทวีความรุนแรง และวัฒนธรรมดั้งเดิมเสี่ยงต่อการสูญหาย',
     vocab:[{kr:'세계화',rom:'se-gye-hwa',th:'โลกาภิวัตน์'},{kr:'교류',rom:'gyo-ryu',th:'การแลกเปลี่ยน'},{kr:'긍정적',rom:'geung-jeong-jeok',th:'เชิงบวก'},{kr:'불평등',rom:'bul-pyeong-deung',th:'ความไม่เท่าเทียม'},{kr:'소멸',rom:'so-myeol',th:'การสูญหาย'},{kr:'위기',rom:'wi-gi',th:'วิกฤต'},{kr:'공평하다',rom:'gong-pyeong-ha-da',th:'เท่าเทียม'}] },
-  { id:27, level:'topik2',       emoji:'🏛️', titleKr:'역사적 책임과 화해',   titleTh:'ความรับผิดชอบทางประวัติศาสตร์',
+
+  { id:27, level:'topik2', category:'society', emoji:'🏛️', titleKr:'역사적 책임과 화해', titleTh:'ความรับผิดชอบทางประวัติศาสตร์',
     story:'과거의 역사적 사건에 대한 책임을 인정하는 것은 진정한 화해의 출발점입니다. 상처를 치유하는 과정은 길고 어렵지만, 서로를 이해하려는 노력 없이는 지속 가능한 평화가 이루어질 수 없습니다.',
     storyTh:'การยอมรับความรับผิดชอบต่อเหตุการณ์ทางประวัติศาสตร์เป็นจุดเริ่มต้นของการปรองดองที่แท้จริง กระบวนการรักษาบาดแผลนั้นยาวนานและยากลำบาก แต่หากปราศจากความพยายามที่จะเข้าใจกัน สันติภาพที่ยั่งยืนก็ไม่อาจเกิดขึ้นได้',
     vocab:[{kr:'책임',rom:'chaek-im',th:'ความรับผิดชอบ'},{kr:'화해',rom:'hwa-hae',th:'การปรองดอง'},{kr:'출발점',rom:'chul-bal-jeom',th:'จุดเริ่มต้น'},{kr:'치유하다',rom:'chi-yu-ha-da',th:'รักษา/เยียวยา'},{kr:'지속 가능하다',rom:'ji-sok ga-neung-ha-da',th:'ยั่งยืน'},{kr:'이루어지다',rom:'i-ru-eo-ji-da',th:'เกิดขึ้น/บรรลุ'}] },
-  { id:28, level:'topik2',       emoji:'🧬', titleKr:'생명공학 윤리',        titleTh:'จริยธรรมเทคโนโลยีชีวภาพ',
+
+  { id:28, level:'topik2', category:'society', emoji:'🧬', titleKr:'생명공학 윤리', titleTh:'จริยธรรมเทคโนโลยีชีวภาพ',
     story:'유전자 편집 기술의 발전은 유전 질환 치료에 혁신적인 가능성을 열어주고 있습니다. 하지만 동시에 인간의 유전적 특성을 조작하는 것에 대한 윤리적 우려도 제기되고 있습니다. 과학의 발전과 인간의 존엄성 사이의 균형이 필요합니다.',
     storyTh:'ความก้าวหน้าของเทคโนโลยีการแก้ไขยีนเปิดโอกาสที่ปฏิวัติในการรักษาโรคทางพันธุกรรม แต่ในเวลาเดียวกันก็มีข้อกังวลทางจริยธรรมเกี่ยวกับการดัดแปลงลักษณะทางพันธุกรรมของมนุษย์',
     vocab:[{kr:'유전자',rom:'yu-jeon-ja',th:'ยีน/พันธุกรรม'},{kr:'편집',rom:'pyeon-jip',th:'การแก้ไข/ตัดต่อ'},{kr:'혁신적',rom:'hyeok-sin-jeok',th:'ปฏิวัติ/นวัตกรรม'},{kr:'우려',rom:'u-ryeo',th:'ความกังวล'},{kr:'존엄성',rom:'jon-eom-seong',th:'ศักดิ์ศรี'},{kr:'균형',rom:'gyun-hyeong',th:'ความสมดุล'},{kr:'조작하다',rom:'jo-jak-ha-da',th:'ดัดแปลง/จัดการ'}] },
+
+  { id:29, level:'beginner', category:'food', emoji:'🛒', titleKr:'마트에서', titleTh:'ที่ซูเปอร์มาร์เก็ต',
+    story:'오늘 저는 마트에 갔어요. 우유하고 빵을 샀어요. 사람이 조금 많았지만 계산은 빨랐어요.',
+    storyTh:'วันนี้ฉันไปซูเปอร์มาร์เก็ต ซื้อนมกับขนมปัง คนค่อนข้างเยอะแต่จ่ายเงินเร็ว',
+    vocab:[{kr:'마트',rom:'ma-teu',th:'ซูเปอร์มาร์เก็ต'},{kr:'우유',rom:'u-yu',th:'นม'},{kr:'빵',rom:'ppang',th:'ขนมปัง'},{kr:'사다',rom:'sa-da',th:'ซื้อ'},{kr:'사람',rom:'sa-ram',th:'คน'},{kr:'계산',rom:'gye-san',th:'การคิดเงิน/ชำระเงิน'},{kr:'빠르다',rom:'ppa-reu-da',th:'เร็ว'}] },
+
+  { id:30, level:'beginner', category:'travel', emoji:'🚇', titleKr:'지하철', titleTh:'รถไฟใต้ดิน',
+    story:'저는 아침마다 지하철을 타요. 지하철은 빠르고 편리해요. 하지만 출근 시간에는 사람이 아주 많아요.',
+    storyTh:'ฉันนั่งรถไฟใต้ดินทุกเช้า รถไฟใต้ดินเร็วและสะดวก แต่ช่วงเวลาไปทำงานคนเยอะมาก',
+    vocab:[{kr:'지하철',rom:'ji-ha-cheol',th:'รถไฟใต้ดิน'},{kr:'아침마다',rom:'a-chim-ma-da',th:'ทุกเช้า'},{kr:'타다',rom:'ta-da',th:'ขึ้น/นั่ง'},{kr:'편리하다',rom:'pyeon-ri-ha-da',th:'สะดวก'},{kr:'출근',rom:'chul-geun',th:'ไปทำงาน'},{kr:'시간',rom:'si-gan',th:'เวลา'},{kr:'아주',rom:'a-ju',th:'มาก'}] },
+
+  { id:31, level:'beginner', category:'daily', emoji:'🛏️', titleKr:'제 방', titleTh:'ห้องของฉัน',
+    story:'제 방에는 책상과 침대가 있어요. 창문 옆에 작은 식물도 있어요. 저는 제 방에서 공부해요.',
+    storyTh:'ในห้องของฉันมีโต๊ะกับเตียง และมีต้นไม้เล็ก ๆ อยู่ข้างหน้าต่าง ฉันอ่านหนังสือในห้องของตัวเอง',
+    vocab:[{kr:'방',rom:'bang',th:'ห้อง'},{kr:'책상',rom:'chaek-sang',th:'โต๊ะ'},{kr:'침대',rom:'chim-dae',th:'เตียง'},{kr:'창문',rom:'chang-mun',th:'หน้าต่าง'},{kr:'식물',rom:'sing-mul',th:'ต้นไม้'},{kr:'옆',rom:'yeop',th:'ข้าง'},{kr:'공부하다',rom:'gong-bu-ha-da',th:'เรียน/อ่านหนังสือ'}] },
+
+  { id:32, level:'elementary', category:'daily', emoji:'📦', titleKr:'온라인 쇼핑', titleTh:'ช้อปปิ้งออนไลน์',
+    story:'어제 온라인으로 운동화를 주문했어요. 사진과 실제 색깔이 조금 다를까 봐 걱정했지만, 생각보다 만족스러웠어요. 배송도 빨라서 기분이 좋았어요.',
+    storyTh:'เมื่อวานฉันสั่งรองเท้าผ้าใบทางออนไลน์ ตอนแรกกังวลว่าสีจริงอาจต่างจากรูป แต่พอได้รับแล้วก็พอใจมาก แถมส่งเร็วด้วยเลยรู้สึกดี',
+    vocab:[{kr:'온라인',rom:'on-ra-in',th:'ออนไลน์'},{kr:'주문하다',rom:'ju-mun-ha-da',th:'สั่งซื้อ'},{kr:'운동화',rom:'un-dong-hwa',th:'รองเท้าผ้าใบ'},{kr:'실제',rom:'sil-je',th:'ของจริง/จริง'},{kr:'걱정하다',rom:'geok-jeong-ha-da',th:'กังวล'},{kr:'만족스럽다',rom:'man-jok-seu-reop-da',th:'น่าพอใจ'},{kr:'배송',rom:'bae-song',th:'การจัดส่ง'}] },
+
+  { id:33, level:'elementary', category:'study', emoji:'📚', titleKr:'한국어 숙제', titleTh:'การบ้านภาษาเกาหลี',
+    story:'오늘 한국어 숙제가 많아서 조금 피곤했어요. 문법 연습도 하고 단어도 외워야 했어요. 그래도 다 끝내고 나니까 뿌듯했어요.',
+    storyTh:'วันนี้การบ้านภาษาเกาหลีเยอะมากเลยเหนื่อยนิดหน่อย ต้องฝึกไวยากรณ์และท่องคำศัพท์ด้วย แต่พอทำเสร็จหมดแล้วก็รู้สึกภูมิใจ',
+    vocab:[{kr:'숙제',rom:'suk-je',th:'การบ้าน'},{kr:'문법',rom:'mun-beop',th:'ไวยากรณ์'},{kr:'연습',rom:'yeon-seup',th:'การฝึก'},{kr:'단어',rom:'dan-eo',th:'คำศัพท์'},{kr:'외우다',rom:'oe-u-da',th:'ท่องจำ'},{kr:'끝내다',rom:'kkeut-nae-da',th:'ทำให้เสร็จ'},{kr:'뿌듯하다',rom:'ppu-deut-ha-da',th:'ภูมิใจ'}] },
+
+  { id:34, level:'elementary', category:'work', emoji:'☔', titleKr:'비 오는 저녁', titleTh:'เย็นวันที่ฝนตก',
+    story:'퇴근할 때 갑자기 비가 많이 왔어요. 우산이 없어서 편의점에서 하나 샀어요. 집에 도착했을 때 신발이 조금 젖어 있었어요.',
+    storyTh:'ตอนเลิกงานฝนตกหนักกะทันหัน ฉันไม่มีร่มเลยต้องซื้อจากร้านสะดวกซื้อ พอถึงบ้านรองเท้าก็เปียกไปนิดหน่อย',
+    vocab:[{kr:'퇴근',rom:'toe-geun',th:'เลิกงาน'},{kr:'갑자기',rom:'gap-ja-gi',th:'กะทันหัน'},{kr:'비',rom:'bi',th:'ฝน'},{kr:'우산',rom:'u-san',th:'ร่ม'},{kr:'도착하다',rom:'do-chak-ha-da',th:'มาถึง'},{kr:'신발',rom:'sin-bal',th:'รองเท้า'},{kr:'젖다',rom:'jeot-da',th:'เปียก'}] },
+
+  { id:35, level:'intermediate', category:'work', emoji:'💼', titleKr:'첫 회사 생활', titleTh:'ชีวิตการทำงานวันแรก',
+    story:'첫 출근 날에는 긴장도 많이 되고 실수할까 봐 걱정도 되었습니다. 하지만 팀원들이 친절하게 도와주어서 생각보다 빨리 적응할 수 있었습니다. 새로운 환경은 부담스럽지만 동시에 저를 성장하게 만드는 계기이기도 합니다.',
+    storyTh:'ในวันแรกของการทำงานฉันทั้งตื่นเต้นและกังวลว่าจะทำผิดพลาด แต่เพราะเพื่อนร่วมทีมช่วยอย่างเป็นมิตร จึงปรับตัวได้เร็วกว่าที่คิด สิ่งแวดล้อมใหม่อาจทำให้รู้สึกกดดัน แต่ในขณะเดียวกันก็เป็นจุดเริ่มต้นที่ทำให้เราเติบโต',
+    vocab:[{kr:'출근',rom:'chul-geun',th:'ไปทำงาน'},{kr:'긴장',rom:'gin-jang',th:'ความตื่นเต้น/ประหม่า'},{kr:'실수하다',rom:'sil-su-ha-da',th:'ทำผิดพลาด'},{kr:'팀원',rom:'tim-won',th:'สมาชิกทีม'},{kr:'적응하다',rom:'jeok-eung-ha-da',th:'ปรับตัว'},{kr:'부담스럽다',rom:'bu-dam-seu-reop-da',th:'กดดัน/หนักใจ'},{kr:'계기',rom:'gye-gi',th:'โอกาส/จุดเริ่มต้น'}] },
+
+  { id:36, level:'intermediate', category:'study', emoji:'🎓', titleKr:'외국어를 배우는 이유', titleTh:'เหตุผลที่เรียนภาษาต่างประเทศ',
+    story:'외국어를 배우는 일은 단순히 시험을 준비하기 위한 과정이 아닙니다. 새로운 언어를 익히면 그 나라의 문화와 사고방식도 함께 이해할 수 있습니다. 그래서 저는 언어 공부가 세상을 넓게 보는 방법이라고 생각합니다.',
+    storyTh:'การเรียนภาษาต่างประเทศไม่ใช่เพียงแค่กระบวนการเพื่อเตรียมสอบเท่านั้น เมื่อเราเรียนรู้ภาษาใหม่ เราจะเข้าใจทั้งวัฒนธรรมและวิธีคิดของประเทศนั้นไปพร้อมกัน ดังนั้นฉันจึงคิดว่าการเรียนภาษาเป็นวิธีหนึ่งที่ทำให้มองโลกได้กว้างขึ้น',
+    vocab:[{kr:'외국어',rom:'oe-gu-geo',th:'ภาษาต่างประเทศ'},{kr:'단순히',rom:'dan-sun-hi',th:'เพียงแค่/อย่างเรียบง่าย'},{kr:'과정',rom:'gwa-jeong',th:'กระบวนการ'},{kr:'익히다',rom:'ik-hi-da',th:'เรียนรู้/ฝึกจนชำนาญ'},{kr:'사고방식',rom:'sa-go-bang-sik',th:'วิธีคิด'},{kr:'이해하다',rom:'i-hae-ha-da',th:'เข้าใจ'},{kr:'넓다',rom:'neol-da',th:'กว้าง'}] },
+
+  { id:37, level:'topik1', category:'society', emoji:'🌐', titleKr:'소셜 미디어의 장단점', titleTh:'ข้อดีและข้อเสียของโซเชียลมีเดีย',
+    story:'소셜 미디어는 사람들과 빠르게 소통할 수 있게 해 주는 편리한 도구입니다. 그러나 잘못된 정보가 쉽게 퍼질 수 있고, 다른 사람과 자신을 비교하면서 스트레스를 받는 경우도 많습니다. 따라서 올바른 사용 습관을 기르는 것이 중요합니다.',
+    storyTh:'โซเชียลมีเดียเป็นเครื่องมือที่สะดวกซึ่งช่วยให้ผู้คนสื่อสารกันได้อย่างรวดเร็ว อย่างไรก็ตาม ข้อมูลที่ผิดพลาดก็สามารถแพร่กระจายได้ง่าย และหลายคนยังเกิดความเครียดจากการเปรียบเทียบตัวเองกับผู้อื่น ดังนั้นการสร้างนิสัยการใช้งานที่เหมาะสมจึงเป็นสิ่งสำคัญ',
+    vocab:[{kr:'소셜 미디어',rom:'so-syeol mi-di-eo',th:'โซเชียลมีเดีย'},{kr:'소통하다',rom:'so-tong-ha-da',th:'สื่อสาร'},{kr:'잘못되다',rom:'jal-mot-doe-da',th:'ผิดพลาด'},{kr:'퍼지다',rom:'peo-ji-da',th:'แพร่กระจาย'},{kr:'비교하다',rom:'bi-gyo-ha-da',th:'เปรียบเทียบ'},{kr:'스트레스',rom:'seu-teu-re-seu',th:'ความเครียด'},{kr:'기르다',rom:'gi-reu-da',th:'สร้าง/ปลูกฝัง'}] },
+
+  { id:38, level:'topik1', category:'society', emoji:'🏃', titleKr:'건강한 생활 습관', titleTh:'นิสัยการใช้ชีวิตที่ดีต่อสุขภาพ',
+    story:'건강을 유지하기 위해서는 규칙적인 생활 습관이 필요합니다. 충분한 수면과 균형 잡힌 식사, 그리고 꾸준한 운동은 몸과 마음 모두에 좋은 영향을 줍니다. 작은 습관이라도 계속 실천하는 것이 중요합니다.',
+    storyTh:'เพื่อรักษาสุขภาพ จำเป็นต้องมีนิสัยการใช้ชีวิตที่สม่ำเสมอ การนอนหลับให้เพียงพอ อาหารที่สมดุล และการออกกำลังกายอย่างต่อเนื่อง ล้วนส่งผลดีต่อทั้งร่างกายและจิตใจ แม้จะเป็นนิสัยเล็ก ๆ แต่การทำอย่างต่อเนื่องคือสิ่งสำคัญ',
+    vocab:[{kr:'유지하다',rom:'yu-ji-ha-da',th:'รักษาไว้'},{kr:'규칙적',rom:'gyu-chik-jeok',th:'สม่ำเสมอ'},{kr:'충분하다',rom:'chung-bun-ha-da',th:'เพียงพอ'},{kr:'균형 잡히다',rom:'gyun-hyeong jap-hi-da',th:'สมดุล'},{kr:'꾸준하다',rom:'kku-jun-ha-da',th:'ต่อเนื่อง/สม่ำเสมอ'},{kr:'영향',rom:'yeong-hyang',th:'อิทธิพล/ผลกระทบ'},{kr:'실천하다',rom:'sil-cheon-ha-da',th:'ลงมือทำ'}] },
+
+  { id:39, level:'topik2', category:'society', emoji:'🏙️', titleKr:'도시화와 삶의 질', titleTh:'ความเป็นเมืองกับคุณภาพชีวิต',
+    story:'도시화는 교통, 교육, 의료 서비스의 접근성을 높여 삶을 더욱 편리하게 만들었습니다. 그러나 높은 주거비와 환경 오염, 그리고 인간관계의 단절과 같은 문제도 함께 나타나고 있습니다. 진정한 삶의 질 향상을 위해서는 경제적 발전뿐 아니라 공동체적 가치도 함께 고려해야 합니다.',
+    storyTh:'ความเป็นเมืองทำให้การเข้าถึงระบบคมนาคม การศึกษา และบริการทางการแพทย์สะดวกขึ้น ส่งผลให้ชีวิตสะดวกสบายมากขึ้น อย่างไรก็ตาม ปัญหาอย่างค่าที่อยู่อาศัยที่สูง มลภาวะ และความห่างเหินของความสัมพันธ์ระหว่างผู้คนก็เพิ่มขึ้นเช่นกัน หากต้องการยกระดับคุณภาพชีวิตอย่างแท้จริง จำเป็นต้องคำนึงถึงคุณค่าของชุมชนควบคู่ไปกับการพัฒนาเศรษฐกิจ',
+    vocab:[{kr:'도시화',rom:'do-si-hwa',th:'ความเป็นเมือง/การขยายตัวของเมือง'},{kr:'접근성',rom:'jeop-geun-seong',th:'การเข้าถึง'},{kr:'주거비',rom:'ju-geo-bi',th:'ค่าที่อยู่อาศัย'},{kr:'환경 오염',rom:'hwan-gyeong o-yeom',th:'มลภาวะสิ่งแวดล้อม'},{kr:'단절',rom:'dan-jeol',th:'การตัดขาด/ห่างเหิน'},{kr:'향상',rom:'hyang-sang',th:'การพัฒนา/ยกระดับ'},{kr:'공동체',rom:'gong-dong-che',th:'ชุมชน'}] },
+
+  { id:40, level:'topik2', category:'society', emoji:'🤖', titleKr:'자동화 시대의 인간 역할', titleTh:'บทบาทของมนุษย์ในยุคอัตโนมัติ',
+    story:'자동화 기술의 확산으로 많은 산업 현장이 빠르게 변화하고 있습니다. 반복적인 업무는 기계가 대신할 수 있게 되었지만, 창의성이나 공감 능력처럼 인간만이 가진 역량은 여전히 중요합니다. 앞으로의 사회에서는 기술과 경쟁하기보다 기술을 이해하고 활용하는 능력이 더욱 요구될 것입니다.',
+    storyTh:'ด้วยการขยายตัวของเทคโนโลยีระบบอัตโนมัติ หลายอุตสาหกรรมกำลังเปลี่ยนแปลงอย่างรวดเร็ว งานที่ทำซ้ำ ๆ สามารถถูกแทนที่ด้วยเครื่องจักรได้ แต่ความสามารถที่มีเฉพาะมนุษย์ เช่น ความคิดสร้างสรรค์และความเข้าอกเข้าใจ ยังมีความสำคัญอยู่เสมอ ในสังคมอนาคต สิ่งที่จำเป็นมากกว่าการแข่งขันกับเทคโนโลยี คือความสามารถในการเข้าใจและใช้ประโยชน์จากเทคโนโลยี',
+    vocab:[{kr:'자동화',rom:'ja-dong-hwa',th:'ระบบอัตโนมัติ'},{kr:'확산',rom:'hwak-san',th:'การขยายตัว'},{kr:'산업 현장',rom:'san-eop hyeon-jang',th:'ภาคอุตสาหกรรม/สถานที่ทำงาน'},{kr:'반복적',rom:'ban-bok-jeok',th:'ซ้ำ ๆ'},{kr:'창의성',rom:'chang-ui-seong',th:'ความคิดสร้างสรรค์'},{kr:'공감 능력',rom:'gong-gam neung-ryeok',th:'ความสามารถในการเข้าอกเข้าใจ'},{kr:'활용하다',rom:'hwal-yong-ha-da',th:'ใช้ประโยชน์'}] },
+
+  { id:41, level:'beginner', category:'food', emoji:'🍳', titleKr:'아침 식사', titleTh:'อาหารเช้า',
+    story:'저는 매일 아침에 간단한 식사를 해요. 보통 계란하고 빵을 먹고 우유를 마셔요. 시간이 없을 때는 바나나만 먹기도 해요. 아침을 먹으면 하루가 더 힘차게 시작돼요.',
+    storyTh:'ฉันกินอาหารเช้าง่าย ๆ ทุกวัน ปกติจะกินไข่ ขนมปัง และดื่มนม บางวันถ้าไม่มีเวลาก็กินแค่กล้วย แต่พอกินอาหารเช้าแล้วจะเริ่มวันได้ดีขึ้น',
+    vocab:[{kr:'아침 식사',rom:'a-chim sik-sa',th:'อาหารเช้า'},{kr:'간단하다',rom:'gan-dan-ha-da',th:'ง่าย ๆ'},{kr:'계란',rom:'gye-ran',th:'ไข่'},{kr:'마시다',rom:'ma-si-da',th:'ดื่ม'},{kr:'힘차다',rom:'him-cha-da',th:'มีพลัง'}] },
+
+  { id:42, level:'beginner', category:'daily', emoji:'📱', titleKr:'휴대폰', titleTh:'โทรศัพท์มือถือ',
+    story:'저는 휴대폰을 자주 사용해요. 친구와 메시지를 보내고 음악도 들어요. 하지만 너무 오래 사용하면 눈이 아파요. 그래서 가끔은 쉬는 것도 중요해요.',
+    storyTh:'ฉันใช้โทรศัพท์มือถือบ่อย ส่งข้อความกับเพื่อนและฟังเพลง แต่ถ้าใช้นานเกินไปจะปวดตา ดังนั้นการพักบ้างก็สำคัญ',
+    vocab:[{kr:'휴대폰',rom:'hyu-dae-pon',th:'มือถือ'},{kr:'메시지',rom:'me-si-ji',th:'ข้อความ'},{kr:'음악',rom:'eum-ak',th:'เพลง'},{kr:'아프다',rom:'a-peu-da',th:'เจ็บ/ปวด'},{kr:'쉬다',rom:'swi-da',th:'พัก'}] },
+
+  { id:43, level:'elementary', category:'daily', emoji:'🏃‍♀️', titleKr:'운동하는 습관', titleTh:'นิสัยการออกกำลังกาย',
+    story:'저는 건강을 위해 일주일에 세 번 운동을 합니다. 처음에는 힘들었지만 점점 몸이 가벼워지는 것을 느꼈습니다. 특히 아침에 운동하면 하루 종일 기분이 좋아집니다.',
+    storyTh:'ฉันออกกำลังกายสัปดาห์ละสามครั้งเพื่อสุขภาพ ตอนแรกเหนื่อยมาก แต่ค่อย ๆ รู้สึกว่าร่างกายเบาขึ้น โดยเฉพาะถ้าออกกำลังกายตอนเช้าจะรู้สึกดีทั้งวัน',
+    vocab:[{kr:'운동',rom:'un-dong',th:'ออกกำลังกาย'},{kr:'습관',rom:'seup-gwan',th:'นิสัย'},{kr:'일주일',rom:'il-ju-il',th:'หนึ่งสัปดาห์'},{kr:'느끼다',rom:'neu-kki-da',th:'รู้สึก'},{kr:'가볍다',rom:'ga-byeop-da',th:'เบา'}] },
+
+  { id:44, level:'elementary', category:'study', emoji:'🎧', titleKr:'음악 듣기', titleTh:'การฟังเพลง',
+    story:'저는 공부할 때 음악을 자주 듣습니다. 조용한 음악을 들으면 집중이 더 잘 됩니다. 하지만 너무 시끄러운 음악은 오히려 방해가 되기도 합니다.',
+    storyTh:'ฉันมักฟังเพลงตอนอ่านหนังสือ เพลงเบา ๆ ช่วยให้มีสมาธิ แต่ถ้าเพลงดังเกินไปกลับรบกวนแทน',
+    vocab:[{kr:'듣다',rom:'deut-da',th:'ฟัง'},{kr:'조용하다',rom:'jo-yong-ha-da',th:'เงียบ'},{kr:'집중',rom:'jip-jung',th:'สมาธิ'},{kr:'시끄럽다',rom:'si-kkeu-reop-da',th:'เสียงดัง'},{kr:'방해',rom:'bang-hae',th:'รบกวน'}] },
+
+  { id:45, level:'intermediate', category:'daily', emoji:'🌅', titleKr:'아침 루틴', titleTh:'กิจวัตรตอนเช้า',
+    story:'저는 하루를 잘 시작하기 위해 아침 루틴을 중요하게 생각합니다. 일어나자마자 스트레칭을 하고 따뜻한 물을 마십니다. 그 후에는 짧은 명상을 하면서 하루의 계획을 정리합니다.',
+    storyTh:'ฉันให้ความสำคัญกับกิจวัตรตอนเช้า เพื่อเริ่มวันอย่างดี หลังตื่นจะยืดเส้นและดื่มน้ำอุ่น จากนั้นนั่งสมาธิสั้น ๆ และวางแผนวัน',
+    vocab:[{kr:'루틴',rom:'ru-tin',th:'กิจวัตร'},{kr:'스트레칭',rom:'seu-teu-re-ching',th:'ยืดเส้น'},{kr:'명상',rom:'myeong-sang',th:'สมาธิ'},{kr:'계획',rom:'gye-hoek',th:'แผน'}] },
+
+  { id:46, level:'intermediate', category:'work', emoji:'📊', titleKr:'시간 관리', titleTh:'การจัดการเวลา',
+    story:'효율적인 시간 관리는 목표를 이루기 위한 중요한 요소입니다. 저는 해야 할 일을 우선순위에 따라 정리하고 하루 계획을 세웁니다. 이렇게 하면 시간을 더 효과적으로 사용할 수 있습니다.',
+    storyTh:'การจัดการเวลาอย่างมีประสิทธิภาพเป็นสิ่งสำคัญในการบรรลุเป้าหมาย ฉันจัดลำดับความสำคัญของงานและวางแผนแต่ละวัน ทำให้ใช้เวลาได้คุ้มค่ามากขึ้น',
+    vocab:[{kr:'시간 관리',rom:'si-gan gwan-ri',th:'การจัดการเวลา'},{kr:'효율적',rom:'hyo-yul-jeok',th:'มีประสิทธิภาพ'},{kr:'우선순위',rom:'u-seon-sun-wi',th:'ลำดับความสำคัญ'},{kr:'정리하다',rom:'jeong-ri-ha-da',th:'จัดระเบียบ'}] },
+
+  { id:47, level:'topik1', category:'study', emoji:'📖', titleKr:'독서의 중요성', titleTh:'ความสำคัญของการอ่านหนังสือ',
+    story:'독서는 지식을 넓히고 사고력을 향상시키는 데 중요한 역할을 합니다. 다양한 책을 읽으면 새로운 관점을 얻을 수 있으며, 이는 개인의 성장에도 큰 도움이 됩니다.',
+    storyTh:'การอ่านหนังสือช่วยเพิ่มพูนความรู้และพัฒนาความคิด การอ่านหลากหลายทำให้ได้มุมมองใหม่และช่วยให้เติบโต',
+    vocab:[{kr:'독서',rom:'dok-seo',th:'การอ่านหนังสือ'},{kr:'사고력',rom:'sa-go-ryeok',th:'ความคิด'},{kr:'관점',rom:'gwan-jeom',th:'มุมมอง'},{kr:'성장',rom:'seong-jang',th:'การเติบโต'}] },
+
+  { id:48, level:'topik1', category:'society', emoji:'💬', titleKr:'의사소통 능력', titleTh:'ทักษะการสื่อสาร',
+    story:'의사소통 능력은 현대 사회에서 매우 중요한 능력 중 하나입니다. 자신의 생각을 명확하게 표현하고 다른 사람의 의견을 존중하는 태도가 필요합니다.',
+    storyTh:'ทักษะการสื่อสารเป็นสิ่งสำคัญในสังคมปัจจุบัน ต้องสามารถแสดงความคิดอย่างชัดเจนและเคารพความคิดเห็นของผู้อื่น',
+    vocab:[{kr:'의사소통',rom:'ui-sa-so-tong',th:'การสื่อสาร'},{kr:'표현하다',rom:'pyo-hyeon-ha-da',th:'แสดงออก'},{kr:'존중하다',rom:'jon-jung-ha-da',th:'เคารพ'},{kr:'태도',rom:'tae-do',th:'ท่าที'}] },
+
+  { id:49, level:'topik2', category:'society', emoji:'🌍', titleKr:'환경 보호의 필요성', titleTh:'ความจำเป็นของการรักษาสิ่งแวดล้อม',
+    story:'환경 보호는 더 이상 선택이 아닌 필수적인 과제가 되었습니다. 산업화로 인해 발생한 환경 오염은 인간의 건강뿐만 아니라 생태계 전체에 심각한 영향을 미치고 있습니다.',
+    storyTh:'การรักษาสิ่งแวดล้อมไม่ใช่ทางเลือกอีกต่อไป แต่เป็นสิ่งจำเป็น มลภาวะจากอุตสาหกรรมส่งผลกระทบต่อทั้งมนุษย์และระบบนิเวศ',
+    vocab:[{kr:'환경 보호',rom:'hwan-gyeong bo-ho',th:'การรักษาสิ่งแวดล้อม'},{kr:'필수적',rom:'pil-su-jeok',th:'จำเป็น'},{kr:'산업화',rom:'san-eop-hwa',th:'อุตสาหกรรม'},{kr:'생태계',rom:'saeng-tae-gye',th:'ระบบนิเวศ'}] },
+
+  { id:50, level:'topik2', category:'work', emoji:'🧑‍💼', titleKr:'직업 선택', titleTh:'การเลือกอาชีพ',
+    story:'직업을 선택하는 과정은 개인의 인생에 큰 영향을 미칩니다. 자신의 흥미와 능력을 고려하여 신중하게 결정하는 것이 중요합니다.',
+    storyTh:'การเลือกอาชีพมีผลต่อชีวิตอย่างมาก ควรพิจารณาความสนใจและความสามารถอย่างรอบคอบ',
+    vocab:[{kr:'직업',rom:'jik-eop',th:'อาชีพ'},{kr:'선택',rom:'seon-taek',th:'เลือก'},{kr:'흥미',rom:'heung-mi',th:'ความสนใจ'},{kr:'신중하다',rom:'sin-jung-ha-da',th:'รอบคอบ'}] },
+
+  { id:51, level:'topik2', category:'society', emoji:'📉', titleKr:'경제 불평등', titleTh:'ความเหลื่อมล้ำทางเศรษฐกิจ',
+    story:'경제 불평등 문제는 전 세계적으로 중요한 사회적 이슈입니다. 부의 집중과 기회의 불균형은 사회 갈등을 심화시키는 원인이 됩니다.',
+    storyTh:'ความเหลื่อมล้ำทางเศรษฐกิจเป็นปัญหาสำคัญทั่วโลก ความไม่เท่าเทียมทำให้เกิดความขัดแย้งในสังคม',
+    vocab:[{kr:'불평등',rom:'bul-pyeong-deung',th:'ความไม่เท่าเทียม'},{kr:'집중',rom:'jip-jung',th:'การกระจุกตัว'},{kr:'기회',rom:'gi-hoe',th:'โอกาส'},{kr:'갈등',rom:'gal-deung',th:'ความขัดแย้ง'}] },
+
+  { id:52, level:'topik2', category:'society', emoji:'🎭', titleKr:'문화 다양성', titleTh:'ความหลากหลายทางวัฒนธรรม',
+    story:'문화 다양성은 서로 다른 문화를 이해하고 존중하는 데 중요한 역할을 합니다. 다양한 문화가 공존하는 사회는 더욱 창의적이고 풍부한 발전을 이룰 수 있습니다.',
+    storyTh:'ความหลากหลายทางวัฒนธรรมช่วยให้เข้าใจและเคารพกัน สังคมที่หลากหลายจะพัฒนาได้อย่างสร้างสรรค์มากขึ้น',
+    vocab:[{kr:'문화',rom:'mun-hwa',th:'วัฒนธรรม'},{kr:'다양성',rom:'da-yang-seong',th:'ความหลากหลาย'},{kr:'공존',rom:'gong-jon',th:'อยู่ร่วมกัน'},{kr:'풍부하다',rom:'pung-bu-ha-da',th:'อุดมสมบูรณ์'}] },
+
+  { id:53, level:'topik2', category:'society', emoji:'📡', titleKr:'정보화 사회', titleTh:'สังคมสารสนเทศ',
+    story:'정보화 사회에서는 정보의 생산과 전달 속도가 매우 빠릅니다. 이러한 변화는 우리의 생활 방식을 크게 바꾸고 있습니다.',
+    storyTh:'ในสังคมข้อมูลข่าวสาร การผลิตและส่งข้อมูลรวดเร็วมาก ส่งผลให้วิถีชีวิตเปลี่ยนไป',
+    vocab:[{kr:'정보',rom:'jeong-bo',th:'ข้อมูล'},{kr:'전달',rom:'jeon-dal',th:'การส่งต่อ'},{kr:'속도',rom:'sok-do',th:'ความเร็ว'},{kr:'변화',rom:'byeon-hwa',th:'การเปลี่ยนแปลง'}] },
+
+  { id:54, level:'topik2', category:'study', emoji:'🏫', titleKr:'교육의 미래', titleTh:'อนาคตของการศึกษา',
+    story:'교육 방식은 기술의 발전과 함께 빠르게 변화하고 있습니다. 온라인 학습과 디지털 도구의 활용은 교육의 새로운 가능성을 열어주고 있습니다.',
+    storyTh:'รูปแบบการศึกษากำลังเปลี่ยนไปอย่างรวดเร็ว เทคโนโลยีและการเรียนออนไลน์เปิดโอกาสใหม่ ๆ',
+    vocab:[{kr:'교육',rom:'gyo-yuk',th:'การศึกษา'},{kr:'방식',rom:'bang-sik',th:'รูปแบบ'},{kr:'온라인',rom:'on-ra-in',th:'ออนไลน์'},{kr:'가능성',rom:'ga-neung-seong',th:'ความเป็นไปได้'}] },
+
+  { id:55, level:'topik2', category:'society', emoji:'⚖️', titleKr:'사회 정의', titleTh:'ความยุติธรรมในสังคม',
+    story:'사회 정의는 공정하고 평등한 사회를 만들기 위한 핵심 가치입니다. 모든 사람이 동등한 기회를 가지는 것이 중요합니다.',
+    storyTh:'ความยุติธรรมในสังคมคือคุณค่าหลักของสังคมที่เท่าเทียม ทุกคนควรมีโอกาสเท่ากัน',
+    vocab:[{kr:'정의',rom:'jeong-ui',th:'ความยุติธรรม'},{kr:'공정하다',rom:'gong-jeong-ha-da',th:'ยุติธรรม'},{kr:'평등',rom:'pyeong-deung',th:'ความเท่าเทียม'},{kr:'기회',rom:'gi-hoe',th:'โอกาส'}] },
+
+  { id:56, level:'topik2', category:'society', emoji:'🌱', titleKr:'지속 가능한 발전', titleTh:'การพัฒนาที่ยั่งยืน',
+    story:'지속 가능한 발전은 현재와 미래 세대 모두를 위한 중요한 목표입니다. 자원을 절약하고 환경을 보호하는 노력이 필요합니다.',
+    storyTh:'การพัฒนาที่ยั่งยืนเป็นเป้าหมายสำคัญ ต้องใช้ทรัพยากรอย่างประหยัดและรักษาสิ่งแวดล้อม',
+    vocab:[{kr:'지속 가능하다',rom:'ji-sok ga-neung-ha-da',th:'ยั่งยืน'},{kr:'자원',rom:'ja-won',th:'ทรัพยากร'},{kr:'절약하다',rom:'jeol-yak-ha-da',th:'ประหยัด'},{kr:'노력',rom:'no-ryeok',th:'ความพยายาม'}] },
+
+  { id:57, level:'topik2', category:'study', emoji:'📚', titleKr:'평생 학습', titleTh:'การเรียนรู้ตลอดชีวิต',
+    story:'평생 학습은 빠르게 변화하는 사회에서 필수적인 요소입니다. 새로운 지식을 계속 배우는 자세가 중요합니다.',
+    storyTh:'การเรียนรู้ตลอดชีวิตเป็นสิ่งจำเป็นในสังคมที่เปลี่ยนแปลงเร็ว ต้องเรียนรู้อย่างต่อเนื่อง',
+    vocab:[{kr:'평생',rom:'pyeong-saeng',th:'ตลอดชีวิต'},{kr:'학습',rom:'hak-seup',th:'การเรียนรู้'},{kr:'자세',rom:'ja-se',th:'ทัศนคติ'},{kr:'계속',rom:'gye-sok',th:'ต่อเนื่อง'}] },
+
+  { id:58, level:'topik2', category:'work', emoji:'🤝', titleKr:'협력의 가치', titleTh:'คุณค่าของความร่วมมือ',
+    story:'협력은 개인과 사회 모두의 발전을 이끄는 중요한 요소입니다. 서로의 강점을 살려 함께 일하면 더 큰 성과를 얻을 수 있습니다.',
+    storyTh:'ความร่วมมือช่วยให้ทั้งบุคคลและสังคมพัฒนา หากใช้จุดแข็งร่วมกันจะได้ผลลัพธ์ที่ดีกว่า',
+    vocab:[{kr:'협력',rom:'hyeop-ryeok',th:'ความร่วมมือ'},{kr:'강점',rom:'gang-jeom',th:'จุดแข็ง'},{kr:'성과',rom:'seong-gwa',th:'ผลลัพธ์'},{kr:'이끌다',rom:'i-kkeul-da',th:'นำไปสู่'}] },
+
+  { id:59, level:'topik2', category:'daily', emoji:'🧭', titleKr:'인생의 방향', titleTh:'ทิศทางของชีวิต',
+    story:'인생의 방향을 찾는 과정은 쉽지 않지만 매우 의미 있는 여정입니다. 다양한 경험을 통해 자신만의 길을 발견할 수 있습니다.',
+    storyTh:'การหาทิศทางชีวิตไม่ง่าย แต่มีความหมายมาก เราสามารถค้นพบเส้นทางของตัวเองผ่านประสบการณ์',
+    vocab:[{kr:'방향',rom:'bang-hyang',th:'ทิศทาง'},{kr:'과정',rom:'gwa-jeong',th:'กระบวนการ'},{kr:'여정',rom:'yeo-jeong',th:'การเดินทางชีวิต'},{kr:'발견하다',rom:'bal-gyeon-ha-da',th:'ค้นพบ'}] },
+
+  { id:60, level:'topik2', category:'daily', emoji:'💭', titleKr:'행복의 의미', titleTh:'ความหมายของความสุข',
+    story:'행복은 사람마다 다르게 정의됩니다. 어떤 사람은 물질적인 성공에서 행복을 느끼고, 다른 사람은 인간관계에서 행복을 찾습니다. 중요한 것은 자신에게 맞는 행복의 기준을 찾는 것입니다.',
+    storyTh:'ความสุขมีความหมายแตกต่างกันในแต่ละคน บางคนรู้สึกจากความสำเร็จ บางคนจากความสัมพันธ์ สิ่งสำคัญคือการหาความสุขในแบบของตัวเอง',
+    vocab:[{kr:'행복',rom:'haeng-bok',th:'ความสุข'},{kr:'정의되다',rom:'jeong-ui-doe-da',th:'ถูกกำหนด'},{kr:'물질적',rom:'mul-jil-jeok',th:'ทางวัตถุ'},{kr:'기준',rom:'gi-jun',th:'มาตรฐาน'}] },
+
+  { id:61, level:'beginner', category:'food', emoji:'🍜', titleKr:'라면', titleTh:'ราเมน',
+    story:'저는 가끔 라면을 먹어요. 라면은 만들기 쉽고 맛있어요. 하지만 너무 자주 먹으면 건강에 안 좋아요.',
+    storyTh:'ฉันกินราเมนบ้างเป็นบางครั้ง เพราะทำง่ายและอร่อย แต่ถ้ากินบ่อยเกินไปก็ไม่ดีต่อสุขภาพ',
+    vocab:[{kr:'라면',rom:'ra-myeon',th:'ราเมน'},{kr:'만들기',rom:'man-deul-gi',th:'การทำ'},{kr:'쉽다',rom:'swip-da',th:'ง่าย'},{kr:'건강',rom:'geon-gang',th:'สุขภาพ'}] },
+
+  { id:62, level:'beginner', category:'daily', emoji:'🧹', titleKr:'청소하는 날', titleTh:'วันทำความสะอาด',
+    story:'오늘은 방을 청소했어요. 책상 위를 정리하고 바닥도 닦았어요. 청소하고 나니까 기분이 상쾌했어요.',
+    storyTh:'วันนี้ฉันทำความสะอาดห้อง จัดโต๊ะและเช็ดพื้น พอทำเสร็จก็รู้สึกสดชื่นมาก',
+    vocab:[{kr:'청소하다',rom:'cheong-so-ha-da',th:'ทำความสะอาด'},{kr:'정리하다',rom:'jeong-ri-ha-da',th:'จัดให้เรียบร้อย'},{kr:'바닥',rom:'ba-dak',th:'พื้น'},{kr:'상쾌하다',rom:'sang-kwae-ha-da',th:'สดชื่น'}] },
+
+  { id:63, level:'elementary', category:'travel', emoji:'🚕', titleKr:'택시를 타다', titleTh:'นั่งแท็กซี่',
+    story:'어제 늦어서 택시를 탔어요. 기사님이 친절하게 길을 설명해 주셨어요. 덕분에 약속 장소에 제시간에 도착할 수 있었어요.',
+    storyTh:'เมื่อวานฉันสายเลยนั่งแท็กซี่ คนขับใจดีและอธิบายเส้นทางให้ด้วย ทำให้ไปถึงที่นัดตรงเวลา',
+    vocab:[{kr:'택시',rom:'taek-si',th:'แท็กซี่'},{kr:'기사님',rom:'gi-sa-nim',th:'คนขับ'},{kr:'설명하다',rom:'seol-myeong-ha-da',th:'อธิบาย'},{kr:'제시간',rom:'je-si-gan',th:'ตรงเวลา'}] },
+
+  { id:64, level:'elementary', category:'study', emoji:'✏️', titleKr:'시험 준비', titleTh:'การเตรียมสอบ',
+    story:'시험이 다가와서 매일 복습하고 있어요. 모르는 단어를 따로 적어 두고 반복해서 읽고 있습니다. 긴장되지만 이번에는 좋은 결과를 얻고 싶어요.',
+    storyTh:'ใกล้สอบแล้ว ฉันเลยทบทวนทุกวัน จดคำศัพท์ที่ไม่รู้แยกไว้แล้วอ่านซ้ำหลายรอบ แม้จะกังวลแต่ก็อยากได้ผลลัพธ์ที่ดีครั้งนี้',
+    vocab:[{kr:'시험',rom:'si-heom',th:'การสอบ'},{kr:'복습',rom:'bok-seup',th:'ทบทวน'},{kr:'반복하다',rom:'ban-bok-ha-da',th:'ทำซ้ำ'},{kr:'결과',rom:'gyeol-gwa',th:'ผลลัพธ์'}] },
+
+  { id:65, level:'intermediate', category:'food', emoji:'🥗', titleKr:'건강한 점심', titleTh:'มื้อกลางวันเพื่อสุขภาพ',
+    story:'최근에는 건강을 생각해서 점심 메뉴를 바꾸기 시작했습니다. 예전에는 빨리 먹을 수 있는 음식만 선택했지만, 지금은 채소와 단백질이 균형 있게 들어간 식사를 하려고 노력합니다. 식습관이 달라지자 오후에 느끼는 피로감도 줄어들었습니다.',
+    storyTh:'ช่วงนี้ฉันเริ่มเปลี่ยนเมนูมื้อกลางวันเพื่อสุขภาพ แต่ก่อนเลือกแต่อาหารที่กินเร็วได้ ตอนนี้พยายามกินอาหารที่มีผักและโปรตีนอย่างสมดุล พอเปลี่ยนนิสัยการกินแล้ว ความเหนื่อยล้าตอนบ่ายก็ลดลงด้วย',
+    vocab:[{kr:'점심',rom:'jeom-sim',th:'อาหารกลางวัน'},{kr:'채소',rom:'chae-so',th:'ผัก'},{kr:'단백질',rom:'dan-baek-jil',th:'โปรตีน'},{kr:'식습관',rom:'sik-seup-gwan',th:'นิสัยการกิน'},{kr:'피로감',rom:'pi-ro-gam',th:'ความเหนื่อยล้า'}] },
+
+  { id:66, level:'intermediate', category:'daily', emoji:'📷', titleKr:'사진 찍기', titleTh:'การถ่ายรูป',
+    story:'저는 여행을 가면 사진을 많이 찍는 편입니다. 사진은 그 순간의 분위기와 감정을 오래 기억하게 해 주기 때문입니다. 같은 장소라도 어떤 시선으로 바라보느냐에 따라 전혀 다른 장면이 만들어진다는 점이 흥미롭습니다.',
+    storyTh:'เวลาไปเที่ยวฉันมักถ่ายรูปเยอะ เพราะภาพถ่ายช่วยให้จำบรรยากาศและความรู้สึกในช่วงเวลานั้นได้นาน แม้จะเป็นสถานที่เดียวกัน แต่ถ้ามองต่างมุมก็ได้ภาพที่ต่างกันอย่างสิ้นเชิง ซึ่งเป็นเรื่องที่น่าสนใจมาก',
+    vocab:[{kr:'사진',rom:'sa-jin',th:'ภาพถ่าย'},{kr:'분위기',rom:'bun-wi-gi',th:'บรรยากาศ'},{kr:'감정',rom:'gam-jeong',th:'ความรู้สึก'},{kr:'시선',rom:'si-seon',th:'สายตา/มุมมอง'},{kr:'장면',rom:'jang-myeon',th:'ฉาก/ภาพ'}] },
+
+  { id:67, level:'topik1', category:'work', emoji:'🧑‍🏫', titleKr:'좋은 리더란', titleTh:'ผู้นำที่ดีคืออะไร',
+    story:'좋은 리더는 단순히 지시만 하는 사람이 아니라 팀원들의 의견을 잘 듣고 방향을 제시할 수 있는 사람이라고 생각합니다. 또한 어려운 상황에서도 책임을 피하지 않고 함께 해결하려는 태도가 중요합니다.',
+    storyTh:'ฉันคิดว่าผู้นำที่ดีไม่ใช่คนที่คอยสั่งอย่างเดียว แต่เป็นคนที่รับฟังความคิดเห็นของสมาชิกและชี้ทิศทางได้ นอกจากนี้ ท่าทีที่ไม่หลีกเลี่ยงความรับผิดชอบและพยายามแก้ปัญหาร่วมกันในสถานการณ์ยากลำบากก็สำคัญเช่นกัน',
+    vocab:[{kr:'리더',rom:'ri-deo',th:'ผู้นำ'},{kr:'지시',rom:'ji-si',th:'คำสั่ง'},{kr:'의견',rom:'ui-gyeon',th:'ความคิดเห็น'},{kr:'책임',rom:'chaek-im',th:'ความรับผิดชอบ'},{kr:'해결하다',rom:'hae-gyeol-ha-da',th:'แก้ไข'}] },
+
+  { id:68, level:'topik1', category:'society', emoji:'🌳', titleKr:'도시의 공원', titleTh:'สวนสาธารณะในเมือง',
+    story:'도시에서 공원은 단순한 휴식 공간 이상의 의미를 가집니다. 사람들은 공원에서 산책을 하거나 운동을 하며 스트레스를 줄일 수 있습니다. 또한 아이들과 노인 모두가 함께 이용할 수 있는 공공 공간이라는 점에서도 가치가 큽니다.',
+    storyTh:'สวนสาธารณะในเมืองมีความหมายมากกว่าพื้นที่พักผ่อน ผู้คนสามารถเดินเล่น ออกกำลังกาย และลดความเครียดได้ อีกทั้งยังเป็นพื้นที่สาธารณะที่ทั้งเด็กและผู้สูงอายุใช้งานร่วมกันได้ จึงมีคุณค่ามาก',
+    vocab:[{kr:'공원',rom:'gong-won',th:'สวนสาธารณะ'},{kr:'휴식',rom:'hyu-sik',th:'การพักผ่อน'},{kr:'산책',rom:'san-chaek',th:'เดินเล่น'},{kr:'공공 공간',rom:'gong-gong gong-gan',th:'พื้นที่สาธารณะ'}] },
+
+  { id:69, level:'topik2', category:'society', emoji:'📰', titleKr:'가짜 뉴스의 위험성', titleTh:'อันตรายของข่าวปลอม',
+    story:'디지털 시대에는 정보가 빠르게 전달되는 만큼, 사실이 확인되지 않은 내용도 쉽게 퍼질 수 있습니다. 특히 자극적인 제목이나 감정을 흔드는 표현은 사람들의 판단을 흐리게 만들 수 있습니다. 따라서 뉴스를 접할 때는 출처를 확인하고 여러 관점을 비교하는 태도가 필요합니다.',
+    storyTh:'ในยุคดิจิทัล ข้อมูลถูกส่งต่ออย่างรวดเร็ว แต่เนื้อหาที่ยังไม่ผ่านการตรวจสอบข้อเท็จจริงก็แพร่กระจายได้ง่ายเช่นกัน โดยเฉพาะพาดหัวที่เร้าอารมณ์หรือถ้อยคำที่กระทบความรู้สึกอาจทำให้การตัดสินใจของผู้คนคลาดเคลื่อน ดังนั้นเมื่อรับข่าวสารจึงควรตรวจสอบแหล่งที่มาและเปรียบเทียบหลายมุมมอง',
+    vocab:[{kr:'가짜 뉴스',rom:'ga-jja nyu-seu',th:'ข่าวปลอม'},{kr:'출처',rom:'chul-cheo',th:'แหล่งที่มา'},{kr:'판단',rom:'pan-dan',th:'การตัดสิน'},{kr:'흐리다',rom:'heu-ri-da',th:'ทำให้พร่า/ไม่ชัด'},{kr:'관점',rom:'gwan-jeom',th:'มุมมอง'}] },
+
+  { id:70, level:'topik2', category:'study', emoji:'💻', titleKr:'온라인 학습의 한계', titleTh:'ข้อจำกัดของการเรียนออนไลน์',
+    story:'온라인 학습은 시간과 장소에 구애받지 않는다는 장점이 있지만, 모든 학습자에게 같은 효과를 주는 것은 아닙니다. 자기 주도성이 부족하면 쉽게 집중력을 잃을 수 있고, 실시간 상호작용이 제한된다는 점도 단점으로 지적됩니다. 따라서 온라인 교육의 질을 높이기 위해서는 기술뿐 아니라 학습 설계도 함께 보완되어야 합니다.',
+    storyTh:'การเรียนออนไลน์มีข้อดีคือไม่จำกัดเวลาและสถานที่ แต่ก็ไม่ได้ให้ผลลัพธ์เท่ากันกับผู้เรียนทุกคน หากขาดวินัยในตนเองก็อาจเสียสมาธิได้ง่าย และการมีปฏิสัมพันธ์แบบทันทีก็ยังมีข้อจำกัด ดังนั้นหากต้องการยกระดับคุณภาพการศึกษาออนไลน์ จำเป็นต้องพัฒนาทั้งเทคโนโลยีและการออกแบบการเรียนรู้ควบคู่กัน',
+    vocab:[{kr:'한계',rom:'han-gye',th:'ข้อจำกัด'},{kr:'자기 주도성',rom:'ja-gi ju-do-seong',th:'การนำตนเอง'},{kr:'상호작용',rom:'sang-ho-ja-gong',th:'ปฏิสัมพันธ์'},{kr:'보완하다',rom:'bo-wan-ha-da',th:'เสริม/ปรับปรุง'}] },
+
+  { id:71, level:'beginner', category:'daily', emoji:'🚌', titleKr:'버스를 기다리다', titleTh:'รอรถบัส',
+    story:'저는 아침에 버스를 기다려요. 버스가 조금 늦어요. 그래서 음악을 들으면서 기다려요.',
+    storyTh:'ฉันรอรถบัสตอนเช้า รถมาช้านิดหน่อย เลยฟังเพลงระหว่างรอ',
+    vocab:[{kr:'기다리다',rom:'gi-da-ri-da',th:'รอ'},{kr:'늦다',rom:'neut-da',th:'ช้า'},{kr:'아침',rom:'a-chim',th:'ตอนเช้า'},{kr:'음악',rom:'eum-ak',th:'เพลง'}] },
+
+  { id:72, level:'beginner', category:'food', emoji:'🍞', titleKr:'빵집', titleTh:'ร้านขนมปัง',
+    story:'집 근처에 작은 빵집이 있어요. 아침에 빵 냄새가 정말 좋아요. 저는 주말마다 그곳에 가요.',
+    storyTh:'มีร้านขนมปังเล็ก ๆ อยู่ใกล้บ้าน ตอนเช้ากลิ่นขนมปังหอมมาก ฉันไปที่นั่นทุกสุดสัปดาห์',
+    vocab:[{kr:'빵집',rom:'ppang-jip',th:'ร้านขนมปัง'},{kr:'근처',rom:'geun-cheo',th:'ใกล้ ๆ'},{kr:'냄새',rom:'naem-sae',th:'กลิ่น'},{kr:'주말마다',rom:'ju-mal-ma-da',th:'ทุกสุดสัปดาห์'}] },
+
+  { id:73, level:'elementary', category:'work', emoji:'📅', titleKr:'바쁜 월요일', titleTh:'วันจันทร์ที่ยุ่งมาก',
+    story:'월요일에는 해야 할 일이 많아서 항상 바쁩니다. 오전에는 회의가 있었고 오후에는 보고서를 정리해야 했습니다. 피곤했지만 계획한 일을 모두 끝내서 만족스러웠습니다.',
+    storyTh:'วันจันทร์มีงานต้องทำเยอะจึงยุ่งเสมอ ช่วงเช้ามีประชุม ส่วนบ่ายต้องจัดรายงาน แม้จะเหนื่อยแต่ก็พอใจที่ทำงานตามแผนเสร็จทั้งหมด',
+    vocab:[{kr:'회의',rom:'hoe-ui',th:'ประชุม'},{kr:'보고서',rom:'bo-go-seo',th:'รายงาน'},{kr:'정리하다',rom:'jeong-ri-ha-da',th:'จัดระเบียบ'},{kr:'만족스럽다',rom:'man-jok-seu-reop-da',th:'น่าพอใจ'}] },
+
+  { id:74, level:'elementary', category:'travel', emoji:'🏖️', titleKr:'바다 여행', titleTh:'เที่ยวทะเล',
+    story:'지난 주말에 친구들과 바다에 다녀왔어요. 날씨가 좋아서 사진도 많이 찍고 해변을 오래 걸었어요. 저녁에는 근처 식당에서 해산물을 먹었는데 정말 맛있었어요.',
+    storyTh:'สุดสัปดาห์ที่แล้วฉันไปทะเลกับเพื่อน อากาศดีเลยถ่ายรูปเยอะและเดินริมชายหาดนาน ตอนเย็นไปกินอาหารทะเลที่ร้านใกล้ ๆ ซึ่งอร่อยมาก',
+    vocab:[{kr:'바다',rom:'ba-da',th:'ทะเล'},{kr:'해변',rom:'hae-byeon',th:'ชายหาด'},{kr:'근처',rom:'geun-cheo',th:'ใกล้ ๆ'},{kr:'해산물',rom:'hae-san-mul',th:'อาหารทะเล'}] },
+
+  { id:75, level:'intermediate', category:'study', emoji:'🗣️', titleKr:'발음 연습', titleTh:'การฝึกออกเสียง',
+    story:'외국어를 배울 때 발음은 자신감을 좌우하는 중요한 요소 중 하나입니다. 문법을 잘 알아도 발음이 부정확하면 의사소통이 어려워질 수 있습니다. 그래서 저는 짧은 문장을 반복해서 따라 읽으며 입에 익숙해질 때까지 연습합니다.',
+    storyTh:'เวลาเรียนภาษาต่างประเทศ การออกเสียงเป็นปัจจัยสำคัญที่ส่งผลต่อความมั่นใจ แม้จะรู้ไวยากรณ์ดี แต่ถ้าออกเสียงไม่ชัดก็อาจสื่อสารลำบาก ดังนั้นฉันจึงฝึกอ่านตามประโยคสั้น ๆ ซ้ำ ๆ จนปากคุ้นเคย',
+    vocab:[{kr:'발음',rom:'ba-reum',th:'การออกเสียง'},{kr:'좌우하다',rom:'jwa-u-ha-da',th:'มีอิทธิพลต่อ'},{kr:'부정확하다',rom:'bu-jeong-hwak-ha-da',th:'ไม่แม่นยำ'},{kr:'익숙해지다',rom:'ik-su-kae-ji-da',th:'คุ้นเคย'}] },
+
+  { id:76, level:'intermediate', category:'daily', emoji:'🌙', titleKr:'잠들기 전', titleTh:'ก่อนเข้านอน',
+    story:'하루를 마무리하는 시간은 생각보다 중요합니다. 저는 잠들기 전에 휴대폰을 잠시 내려놓고 오늘 있었던 일을 천천히 떠올려 봅니다. 그렇게 하면 복잡했던 마음이 조금씩 정리되고 더 편안하게 잠들 수 있습니다.',
+    storyTh:'ช่วงเวลาก่อนจบวันสำคัญกว่าที่คิด ก่อนนอนฉันจะวางมือถือไว้สักพักแล้วค่อย ๆ ทบทวนสิ่งที่เกิดขึ้นในวันนั้น วิธีนี้ช่วยให้ความคิดที่วุ่นวายค่อย ๆ เป็นระเบียบ และทำให้นอนหลับได้อย่างสบายขึ้น',
+    vocab:[{kr:'마무리하다',rom:'ma-mu-ri-ha-da',th:'สรุป/จบ'},{kr:'떠올리다',rom:'tteo-ol-li-da',th:'นึกถึง'},{kr:'복잡하다',rom:'bok-jap-ha-da',th:'ซับซ้อน'},{kr:'편안하다',rom:'pyeon-an-ha-da',th:'สบายใจ'}] },
+
+  { id:77, level:'topik1', category:'society', emoji:'🚮', titleKr:'분리수거의 필요성', titleTh:'ความจำเป็นของการแยกขยะ',
+    story:'환경을 보호하기 위해서는 분리수거를 실천하는 습관이 필요합니다. 작은 행동처럼 보일 수 있지만, 많은 사람이 함께 참여하면 큰 변화를 만들 수 있습니다. 특히 플라스틱과 종이, 유리 등을 올바르게 분류하는 것이 중요합니다.',
+    storyTh:'เพื่อปกป้องสิ่งแวดล้อม จำเป็นต้องมีนิสัยในการแยกขยะ แม้จะดูเป็นการกระทำเล็ก ๆ แต่หากหลายคนร่วมมือกันก็สามารถสร้างการเปลี่ยนแปลงที่ยิ่งใหญ่ได้ โดยเฉพาะการแยกพลาสติก กระดาษ และแก้วอย่างถูกต้องเป็นสิ่งสำคัญ',
+    vocab:[{kr:'분리수거',rom:'bul-ri-su-geo',th:'การแยกขยะ'},{kr:'실천하다',rom:'sil-cheon-ha-da',th:'ลงมือทำ'},{kr:'변화',rom:'byeon-hwa',th:'การเปลี่ยนแปลง'},{kr:'분류하다',rom:'bul-ryu-ha-da',th:'จำแนก'}] },
+
+  { id:78, level:'topik1', category:'work', emoji:'📞', titleKr:'서비스의 중요성', titleTh:'ความสำคัญของการบริการ',
+    story:'좋은 서비스는 단순히 친절한 말투에서 끝나지 않습니다. 고객의 입장에서 문제를 이해하고 빠르게 해결하려는 태도가 함께 필요합니다. 결국 서비스의 질은 회사의 이미지와도 직접적으로 연결됩니다.',
+    storyTh:'การบริการที่ดีไม่ได้จบแค่การพูดจาสุภาพ แต่ต้องมีท่าทีที่เข้าใจปัญหาจากมุมมองของลูกค้าและพยายามแก้ไขอย่างรวดเร็ว สุดท้ายแล้วคุณภาพของการบริการเชื่อมโยงโดยตรงกับภาพลักษณ์ขององค์กรด้วย',
+    vocab:[{kr:'서비스',rom:'seo-bi-seu',th:'การบริการ'},{kr:'고객',rom:'go-gaek',th:'ลูกค้า'},{kr:'해결',rom:'hae-gyeol',th:'การแก้ไข'},{kr:'이미지',rom:'i-mi-ji',th:'ภาพลักษณ์'}] },
+
+  { id:79, level:'topik2', category:'society', emoji:'🏠', titleKr:'1인 가구의 증가', titleTh:'การเพิ่มขึ้นของครัวเรือนคนเดียว',
+    story:'최근에는 혼자 사는 사람들이 늘어나면서 1인 가구가 사회의 중요한 구성 단위로 떠오르고 있습니다. 이는 개인의 삶의 방식이 다양해졌다는 점을 보여 주지만, 동시에 외로움이나 주거 비용 증가와 같은 문제도 함께 나타나고 있습니다. 따라서 정책 역시 변화하는 가족 형태를 반영할 필요가 있습니다.',
+    storyTh:'ช่วงหลังมานี้จำนวนคนที่อาศัยอยู่คนเดียวเพิ่มขึ้น ทำให้ครัวเรือนคนเดียวกลายเป็นหน่วยสำคัญของสังคม ปรากฏการณ์นี้สะท้อนให้เห็นว่าวิถีชีวิตของผู้คนมีความหลากหลายมากขึ้น แต่ขณะเดียวกันก็เกิดปัญหาอย่างความเหงาและค่าที่อยู่อาศัยที่สูงขึ้นตามมา ดังนั้นนโยบายภาครัฐก็จำเป็นต้องสะท้อนรูปแบบครอบครัวที่เปลี่ยนแปลงไปด้วย',
+    vocab:[{kr:'1인 가구',rom:'il-in ga-gu',th:'ครัวเรือนคนเดียว'},{kr:'구성 단위',rom:'gu-seong dan-wi',th:'หน่วยองค์ประกอบ'},{kr:'외로움',rom:'oe-ro-um',th:'ความเหงา'},{kr:'반영하다',rom:'ban-yeong-ha-da',th:'สะท้อน'}] },
+
+  { id:80, level:'topik2', category:'society', emoji:'🌐', titleKr:'언어와 정체성', titleTh:'ภาษาและอัตลักษณ์',
+    story:'언어는 단순한 의사소통 수단을 넘어 한 사회의 역사와 문화, 그리고 정체성을 담고 있습니다. 어떤 언어를 사용하느냐에 따라 사람들은 자신이 속한 공동체를 더 강하게 인식하기도 합니다. 따라서 언어를 지킨다는 것은 단지 말을 보존하는 일이 아니라, 한 집단의 기억과 가치까지 이어 가는 일이라고 볼 수 있습니다.',
+    storyTh:'ภาษาไม่ได้เป็นเพียงเครื่องมือสื่อสารเท่านั้น แต่ยังบรรจุประวัติศาสตร์ วัฒนธรรม และอัตลักษณ์ของสังคมไว้ด้วย ภาษาที่ผู้คนใช้ยังทำให้พวกเขารับรู้ความเป็นส่วนหนึ่งของชุมชนได้ชัดเจนยิ่งขึ้น ดังนั้นการรักษาภาษาไว้จึงไม่ใช่แค่การอนุรักษ์คำพูด แต่ยังเป็นการสืบต่อความทรงจำและคุณค่าของกลุ่มคนหนึ่งด้วย',
+    vocab:[{kr:'정체성',rom:'jeong-che-seong',th:'อัตลักษณ์'},{kr:'공동체',rom:'gong-dong-che',th:'ชุมชน'},{kr:'보존하다',rom:'bo-jon-ha-da',th:'อนุรักษ์'},{kr:'기억',rom:'gi-eok',th:'ความทรงจำ'},{kr:'가치',rom:'ga-chi',th:'คุณค่า'}] }
 ];
 
-function generateArticles() {
-  const all = [];
-  for (let i = 0; i < 500; i++) {
-    const base = ARTICLES_DATA[i % ARTICLES_DATA.length];
-    all.push({ ...base, id: i + 1 });
-  }
-  return all;
-}
-const ALL_ARTICLES = generateArticles();
+const ALL_ARTICLES = ARTICLES_DATA;
 
 // ── WRITE PROMPTS ──
 const WRITE_PROMPTS = {
@@ -604,7 +1074,7 @@ const WRITE_PROMPTS = {
 };
 
 // ── STATE ──
-let currentLevel = 'all', currentSearch = '', currentPage = 0;
+let currentLevel = 'all', currentCategory = 'all', currentSearch = '', currentPage = 0;
 const PAGE_SIZE = 20;
 let writeMode = 'sentence', writeLevel = 'beginner';
 let currentTab = 'read';
@@ -661,10 +1131,113 @@ function modalSpeak() {
 function getFiltered() {
   return ALL_ARTICLES.filter(a => {
     const ml = currentLevel === 'all' || a.level === currentLevel;
+    const mc = currentCategory === 'all' || a.category === currentCategory;
     const q = currentSearch.toLowerCase();
     const ms = !q || a.titleKr.includes(q) || a.titleTh.includes(q) || a.vocab.some(v => v.kr.includes(q) || v.th.includes(q));
-    return ml && ms;
+    return ml && mc && ms;
   });
+}
+
+// ── BOOKMARK STORAGE ──
+function getBookmarks() {
+  try {
+    return JSON.parse(localStorage.getItem('krr_bookmarks') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveBookmarks(ids) {
+  localStorage.setItem('krr_bookmarks', JSON.stringify(ids));
+}
+
+function isBookmarked(id) {
+  return getBookmarks().includes(id);
+}
+
+function toggleBookmark(id, evt) {
+  if (evt) evt.stopPropagation();
+
+  let bookmarks = getBookmarks();
+
+  if (bookmarks.includes(id)) {
+    bookmarks = bookmarks.filter(x => x !== id);
+  } else {
+    bookmarks.push(id);
+  }
+
+  saveBookmarks(bookmarks);
+  renderBookmarks();
+  render();
+}
+
+// ── CONTINUE READING ──
+function saveLastRead(id) {
+  localStorage.setItem('krr_last_read', String(id));
+}
+
+function getLastRead() {
+  return localStorage.getItem('krr_last_read');
+}
+
+function renderContinueReading() {
+  const card = document.getElementById('continue-card');
+  const title = document.getElementById('continue-title');
+  const sub = document.getElementById('continue-sub');
+
+  const lastId = getLastRead();
+  if (!lastId) {
+    card.classList.remove('show');
+    return;
+  }
+
+  const article = ALL_ARTICLES.find(a => String(a.id) === String(lastId));
+  if (!article) {
+    card.classList.remove('show');
+    return;
+  }
+
+  title.textContent = `${article.emoji} ${article.titleKr}`;
+  sub.textContent = `${article.titleTh} · ${LEVELS[article.level].label}`;
+
+  card.classList.add('show');
+  card.onclick = () => openModal(article);
+}
+
+// ── BOOKMARK RENDER ──
+function renderBookmarks() {
+  const bar = document.getElementById('bookmark-bar');
+  const list = document.getElementById('bookmark-list');
+  const bookmarks = getBookmarks();
+
+  if (!bookmarks.length) {
+    bar.classList.remove('show');
+    list.innerHTML = '';
+    return;
+  }
+
+  const items = bookmarks
+    .map(id => ALL_ARTICLES.find(a => a.id === id))
+    .filter(Boolean);
+
+  if (!items.length) {
+    bar.classList.remove('show');
+    list.innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = items.map(a => `
+    <button class="bookmark-chip" onclick="openModalById(${a.id})">
+      ${a.emoji} ${a.titleKr}
+    </button>
+  `).join('');
+
+  bar.classList.add('show');
+}
+
+function openModalById(id) {
+  const article = ALL_ARTICLES.find(a => a.id === id);
+  if (article) openModal(article);
 }
 
 // ── RENDER GRID ──
@@ -682,23 +1255,25 @@ function render() {
       div.className = 'card';
       div.style.animationDelay = (idx % PAGE_SIZE * 0.03) + 's';
       div.innerHTML = `
-        <div class="card-img ${lv.soft}">
-          <span style="font-size:56px">${a.emoji}</span>
-          <span class="card-img-num">#${a.id}</span>
-          <span class="level-badge ${lv.badge}">${lv.label}</span>
-        </div>
-        <div class="card-body">
-          <div class="card-title-kr">${a.titleKr}</div>
-          <div class="card-title-th">${a.titleTh}</div>
-          <div class="card-vocab-preview">${a.vocab.map(v => `<span class="vocab-chip">${v.kr}</span>`).join('')}</div>
-          <div class="card-actions">
-            <span style="font-size:10px;color:var(--muted)">${lv.desc} · ${a.vocab.length} คำ</span>
-            <button class="speak-btn" data-type="card" onclick="event.stopPropagation();speakText('${a.titleKr.replace(/'/g,"\\'")}',this,0.8)">🔊 ฟัง</button>
-          </div>
-        </div>`;
-      div.onclick = () => openModal(a);
-      grid.appendChild(div);
-    });
+  <div class="card-img ${lv.soft}">
+    <span style="font-size:56px">${a.emoji}</span>
+    <span class="card-img-num">#${a.id}</span>
+    <span class="level-badge ${lv.badge}">${lv.label}</span>
+  </div>
+  <div class="card-body">
+    <div class="card-title-kr">${a.titleKr}</div>
+    <div class="card-title-th">${a.titleTh}</div>
+    <div class="card-vocab-preview">${a.vocab.map(v => `<span class="vocab-chip">${v.kr}</span>`).join('')}</div>
+    <div class="card-actions">
+      <span style="font-size:10px;color:var(--muted)">${lv.desc} · ${a.vocab.length} คำ</span>
+      <div class="card-actions-right">
+        <button class="bookmark-btn ${isBookmarked(a.id) ? 'active' : ''}" onclick="toggleBookmark(${a.id}, event)">
+          ${isBookmarked(a.id) ? '★' : '☆'}
+        </button>
+        <button class="speak-btn" data-type="card" onclick="event.stopPropagation();speakText('${a.titleKr.replace(/'/g,"\\'")}',this,0.8)">🔊 ฟัง</button>
+      </div>
+    </div>
+  </div>`;
   }
   document.getElementById('page-count').textContent = `แสดง ${Math.min(slice.length, total)} / ${total} บทความ`;
   document.getElementById('load-more').style.display = slice.length < total ? 'block' : 'none';
@@ -709,6 +1284,8 @@ function openModal(a) {
   const lv = LEVELS[a.level];
   synth && synth.cancel();
   if (currentSpeakBtn) { currentSpeakBtn.classList.remove('speaking'); currentSpeakBtn = null; }
+  saveLastRead(a.id);
+  renderContinueReading();
   const imgEl = document.getElementById('m-img');
   imgEl.className = `modal-header-img ${lv.soft}`;
   imgEl.innerHTML = `<span style="font-size:72px">${a.emoji}</span><button class="modal-close" onclick="closeModal()">✕</button>`;
@@ -751,10 +1328,10 @@ function switchTab(tab) {
 }
 
 // ── WRITE MODE ──
-function setWriteMode(mode) {
+function setWriteMode(mode, evt) {
   writeMode = mode;
   document.querySelectorAll('.write-mode-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  evt.target.classList.add('active');
   updatePrompt();
 }
 
@@ -841,16 +1418,28 @@ document.querySelectorAll('.lvl-btn[data-level]').forEach(btn => {
     render();
   });
 });
-
+  
 // ── LEVEL BTNS (write) ──
 document.querySelectorAll('.lvl-btn[data-wlevel]').forEach(btn => {
   btn.addEventListener('click', () => setWriteLevel(btn.dataset.wlevel));
+});
+
+// ── CATEGORY BTNS ──
+document.querySelectorAll('.category-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCategory = btn.dataset.category;
+    currentPage = 0;
+    render();
+  });
 });
 
 document.getElementById('search').addEventListener('input', e => { currentSearch = e.target.value; currentPage = 0; render(); });
 document.getElementById('load-more').addEventListener('click', () => { currentPage++; render(); });
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 document.getElementById('write-area').addEventListener('input', e => { document.getElementById('char-count').textContent = e.target.value.length; });
+
 
 // ── WEATHER (Seoul OpenWeatherMap — free API) ──
 async function fetchSeoulWeather() {
@@ -956,6 +1545,8 @@ function startSunshine() {
 // ── INIT ──
 updatePrompt();
 render();
+renderBookmarks();
+renderContinueReading();
 fetchSeoulWeather();
 
 // Init snow immediately (Seoul is cold in March)
