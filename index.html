@@ -493,8 +493,8 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   <!-- STATS -->
   <div class="stats-bar">
     <div class="stat-pill online"><div class="blink"></div><span id="online-count">–</span> คนออนไลน์</div>
-    <div class="stat-pill total">👁 เข้าชมทั้งหมด <span id="total-count" style="margin-left:4px">–</span> ครั้ง</div>
-    <div class="stat-pill read">📖 อ่านไปแล้ว <span id="articles-read-count" style="margin-left:4px">–</span> บทความ</div>
+    <div class="stat-pill total">👁 เข้าชมทั้งหมด<span id="total-count" style="margin-left:4px">–</span> ครั้ง</div>
+    <div class="stat-pill read">📖 อ่านไปแล้ว<span id="articles-read-count" style="margin-left:4px">–</span> บทความ</div>
   </div>
 
   <!-- TABS -->
@@ -507,7 +507,7 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   <!-- READ PANEL -->
 <div id="read-panel">
   <div class="level-section">
-    <div class="section-label">เลือกระดับที่ต้องการ</div>
+    <div class="section-label">เลือกระดับเรื่องสั้น</div>
     <div class="level-btns">
       <div class="level-row">
         <button class="lvl-btn active" data-level="all">🌈 ทั้งหมด</button>
@@ -560,12 +560,21 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
     <div class="section-label">เลือกระดับเรื่องยาว</div>
     <div class="level-btns">
       <div class="level-row">
-        <button class="lvl-btn active" data-llevel="all">🌈 ทั้งหมด</button>
-        <button class="lvl-btn" data-llevel="beginner">🌱 Beginner</button>
-        <button class="lvl-btn" data-llevel="elementary">🌿 Elementary</button>
-        <button class="lvl-btn" data-llevel="intermediate">🌻 Intermediate</button>
-        <button class="lvl-btn" data-llevel="topik1">🌺 TOPIK I</button>
-        <button class="lvl-btn" data-llevel="topik2">💎 TOPIK II</button>
+        <button class="lvl-btn" data-llevel="beginner">
+  🌱 Beginner <span class="lvl-sub">1A</span>
+</button>
+<button class="lvl-btn" data-llevel="elementary">
+  🌿 Elementary <span class="lvl-sub">1B–2A</span>
+</button>
+<button class="lvl-btn" data-llevel="intermediate">
+  🌻 Intermediate <span class="lvl-sub">2B–3A</span>
+</button>
+<button class="lvl-btn" data-llevel="topik1">
+  🌺 TOPIK I <span class="lvl-sub">Level 1–2</span>
+</button>
+<button class="lvl-btn" data-llevel="topik2">
+  💎 TOPIK II <span class="lvl-sub">Level 3–6</span>
+</button>
       </div>
     </div>
   </div>
