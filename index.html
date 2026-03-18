@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국어 독서실 · Korean Reading Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+  🔧 SETUP REQUIRED — แก้ค่าด้านล่างก่อน deploy
+  ============================================================
+
+  1) FIREBASE — สมัครที่ https://firebase.google.com
+     - สร้าง project → Realtime Database → เปิด Rules ให้ read/write
+     - นำ config มาวางแทน YOUR_... ด้านล่าง
+
+  2) CLAUDE API KEY — สมัครที่ https://console.anthropic.com
+     - สร้าง API key แล้วใส่แทน YOUR_CLAUDE_API_KEY
+
+  3) GOOGLE SHEETS (สำหรับ log การเขียน)
+     - สร้าง Google Sheet
+     - Extensions → Apps Script → วางโค้ดใน APPS_SCRIPT_CODE.txt
+     - Deploy as Web App → copy URL มาวางแทน YOUR_APPS_SCRIPT_URL
+  ============================================================ -->
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, increment, runTransaction, serverTimestamp, onDisconnect }
+    from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+  // ✅ Firebase config — korean-reading-room-bykayla
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcBYUpwFEU5jSHSyMErVgb2pnDW5F_esQ",
+    authDomain: "korean-reading-room-bykayla.firebaseapp.com",
+    databaseURL: "https://korean-reading-room-bykayla-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "korean-reading-room-bykayla",
+    storageBucket: "korean-reading-room-bykayla.firebasestorage.app",
+    messagingSenderId: "253708882322",
+    appId: "1:253708882322:web:ad428b6a86ecf7f378314b",
+    measurementId: "G-3NX8V947EH"
+  };
+
+  let db, presenceRef, connectedRef;
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+
+    // Total page views
+    const totalRef = ref(db, 'stats/totalViews');
+    runTransaction(totalRef, v => (v || 0) + 1);
+    onValue(totalRef, snap => {
+      document.getElementById('total-count').textContent = (snap.val() || 0).toLocaleString();
+    });
+
+    // Articles read count
+    const articlesReadRef = ref(db, 'stats/articlesRead');
+    onValue(articlesReadRef, snap => {
+      document.getElementById('articles-read-count').textContent = (snap.val() || 0).toLocaleString();
+    });
+
+    // Online presence (realtime)
+    const onlineCountRef = ref(db, 'stats/onlineCount');
+    connectedRef = ref(db, '.info/connected');
+    const uid = Math.random().toString(36).slice(2);
+    presenceRef = ref(db, `presence/${uid}`);
+
+    onValue(connectedRef, snap => {
+      if (snap.val()) {
+        set(presenceRef, { online: true, t: Date.now() });
+        onDisconnect(presenceRef).remove();
+      }
+    });
+
+    const presenceRoot = ref(db, 'presence');
+    onValue(presenceRoot, snap => {
+      const count = snap.val() ? Object.keys(snap.val()).length : 0;
+      document.getElementById('online-count').textContent = count;
+    });
+
+    // expose for article read tracking
+    window._db = db;
+    window._dbRef = ref;
+    window._dbRun = runTransaction;
+
+  } catch(e) {
+    console.warn('Firebase not configured, using simulation mode');
+    // Simulation fallback
+    let sim = { online: Math.floor(Math.random()*20)+5, total: Math.floor(Math.random()*500)+1200, read: Math.floor(Math.random()*300)+80 };
+    document.getElementById('online-count').textContent = sim.online;
+    document.getElementById('total-count').textContent = sim.total.toLocaleString();
+    document.getElementById('articles-read-count').textContent = sim.read.toLocaleString();
+    setInterval(() => {
+      sim.online = Math.max(1, sim.online + Math.floor(Math.random()*3)-1);
+      sim.total += Math.floor(Math.random()*2);
+      document.getElementById('online-count').textContent = sim.online;
+      document.getElementById('total-count').textContent = sim.total.toLocaleString();
+    }, 5000);
+  }
+
+  window._trackArticleRead = function() {
+    if (!window._db) return;
+    try {
+      const r = window._dbRef(window._db, 'stats/articlesRead');
+      window._dbRun(r, v => (v || 0) + 1);
+    } catch(e) {}
+  };
+</script>
+
+<style>
+/* ── BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh; overflow-x: hidden; position: relative; }
+
+:root {
+  --peach: #ffb3a0; --peach2: #ff8c73; --mint: #9de8d0; --mint2: #2aaa7a;
+  --lav2: #7050c0; --yellow: #ffd97d; --sky: #a5d8ff;
+  --text: #3d2c2c; --muted: #9b8b8b; --border: #f0e6e0;
+  --blue2: #3a8ee0; --amber2: #d09000; --coral2: #e06030;
+}
+
+/* ── WEATHER CANVAS ── */
+#weather-canvas {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  width: 100%; height: 100%;
+}
+
+/* ── APP WRAPPER ── */
+#app { max-width: 1100px; margin: 0 auto; padding: 0 16px 80px; position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+.header { text-align: center; padding: 36px 0 20px; position: relative; }
+.header-deco { position: absolute; top: 20px; font-size: 22px; opacity: 0.55; animation: float 3s ease-in-out infinite; }
+.header-deco:nth-child(1){ left:5%; animation-delay:0s; }
+.header-deco:nth-child(2){ left:18%; animation-delay:0.4s; }
+.header-deco:nth-child(3){ right:18%; animation-delay:0.8s; }
+.header-deco:nth-child(4){ right:5%; animation-delay:1.2s; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+
+.logo { display:inline-block; background:linear-gradient(135deg,#ff8c73,#f9638a,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-size:34px; font-weight:900; letter-spacing:-0.5px; }
+.logo-kr { font-family:'Noto Sans KR',sans-serif; font-size:17px; font-weight:700; background:linear-gradient(135deg,#ff8c73,#f9638a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-top:-4px; }
+.header-sub { font-size:14px; color:var(--muted); margin-top:6px; font-weight:600; }
+.weather-badge { display:inline-flex; align-items:center; gap:5px; margin-top:8px; font-size:12px; color:var(--muted); background:rgba(255,255,255,0.7); padding:3px 12px; border-radius:100px; border:1px solid var(--border); backdrop-filter:blur(4px); }
+
+/* ── STATS BAR ── */
+.stats-bar { display:flex; justify-content:center; gap:10px; margin:16px 0; flex-wrap:wrap; }
+.stat-pill { display:flex; align-items:center; gap:6px; padding:7px 16px; border-radius:100px; font-size:13px; font-weight:700; }
+.stat-pill.online  { background:#e8fdf4; color:#1a8a60; border:1.5px solid #9de8d0; }
+.stat-pill.total   { background:#fef3f0; color:#c44a2a; border:1.5px solid #ffb3a0; }
+.stat-pill.read    { background:#f3f0fe; color:#6d48c7; border:1.5px solid #c4b5fd; }
+.blink { width:8px; height:8px; border-radius:50%; background:#1ab87a; animation:blink 1.2s ease-in-out infinite; flex-shrink:0; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── TABS ── */
+.tabs { display:flex; justify-content:center; gap:8px; margin:20px 0 16px; }
+.tab-btn { padding:9px 22px; border-radius:100px; border:2px solid var(--border); background:white; font-size:13px; font-weight:800; color:var(--muted); cursor:pointer; font-family:'Nunito',sans-serif; transition:all 0.18s; }
+.tab-btn:hover { border-color:var(--peach2); color:var(--peach2); }
+.tab-btn.active { background:var(--peach2); border-color:var(--peach2); color:white; }
+
+/* ── LEVEL SECTION ── */
+.level-section { margin:0 0 16px; }
+.section-label { font-size:12px; font-weight:700; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; text-align:center; }
+.level-btns { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.level-row { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+
+.lvl-btn { padding:7px 16px; border-radius:100px; border:2px solid transparent; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.18s; font-family:'Nunito',sans-serif; display:flex; align-items:center; gap:4px; background:white; line-height:1.3; }
+.lvl-btn:hover { transform:translateY(-2px); }
+
+.lvl-btn[data-level="all"]          { border-color:#c4a89a; color:#7a5a50; }
+.lvl-btn[data-level="all"].active   { background:#8a6058; border-color:#8a6058; color:#fff; }
+.lvl-btn[data-level="beginner"]     { border-color:#2aaa7a; color:#1a7a5a; }
+.lvl-btn[data-level="beginner"].active { background:#2aaa7a; border-color:#2aaa7a; color:#fff; }
+.lvl-btn[data-level="elementary"]   { border-color:#3a8ee0; color:#1a5090; }
+.lvl-btn[data-level="elementary"].active { background:#3a8ee0; border-color:#3a8ee0; color:#fff; }
+.lvl-btn[data-level="intermediate"] { border-color:#d09000; color:#7a5000; }
+.lvl-btn[data-level="intermediate"].active { background:#d09000; border-color:#d09000; color:#fff; }
+.lvl-btn[data-level="topik1"]       { border-color:#e06030; color:#b03010; }
+.lvl-btn[data-level="topik1"].active { background:#e06030; border-color:#e06030; color:#fff; }
+.lvl-btn[data-level="topik2"]       { border-color:#7050c0; color:#5030a0; }
+.lvl-btn[data-level="topik2"].active { background:#7050c0; border-color:#7050c0; color:#fff; }
+
+.lvl-sub { font-size:10px; opacity:0.75; font-weight:600; }
+
+/* ── SEARCH ── */
+.search-wrap { display:flex; justify-content:center; margin:0 0 20px; }
+.search-box { width:100%; max-width:480px; padding:10px 18px; border-radius:100px; border:2px solid var(--border); font-size:14px; font-family:'Nunito',sans-serif; outline:none; background:white; color:var(--text); transition:border-color 0.2s; }
+.search-box:focus { border-color:var(--peach2); }
+
+/* ── GRID ── */
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+.card { background:white; border-radius:20px; overflow:hidden; border:1.5px solid var(--border); cursor:pointer; transition:transform 0.18s,box-shadow 0.18s; animation:popIn 0.3s ease both; }
+.card:hover { transform:translateY(-5px); box-shadow:0 12px 30px rgba(200,130,120,0.15); }
+@keyframes popIn { from{opacity:0;transform:scale(0.95) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+.card-img { width:100%; height:140px; display:flex; align-items:center; justify-content:center; font-size:64px; position:relative; }
+.card-img-num { font-family:'Noto Sans KR',sans-serif; font-size:11px; font-weight:700; position:absolute; bottom:8px; left:10px; color:white; text-shadow:0 1px 4px rgba(0,0,0,0.3); background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:100px; }
+.level-badge { position:absolute; top:8px; right:8px; font-size:10px; font-weight:800; padding:3px 9px; border-radius:100px; color:white; }
+
+.card-body { padding:12px 14px 14px; }
+.card-title-kr { font-family:'Noto Sans KR',sans-serif; font-size:15px; font-weight:700; color:var(--text); margin-bottom:1px; }
+.card-title-th { font-size:12px; color:var(--muted); margin-bottom:8px; }
+.card-vocab-preview { display:flex; flex-wrap:wrap; gap:3px; margin-bottom:10px; }
+.vocab-chip { font-family:'Noto Sans KR',sans-serif; font-size:10px; font-weight:500; padding:2px 7px; border-radius:100px; background:#fff3f0; color:#c04020; border:1px solid #ffd0c8; }
+.card-actions { display:flex; align-items:center; justify-content:space-between; }
+.speak-btn { display:flex; align-items:center; gap:4px; padding:5px 12px; border-radius:100px; border:1.5px solid #ffd0c8; background:#fff3f0; color:#c04020; font-size:11px; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer; transition:all 0.18s; }
+.speak-btn:hover { background:#ffe5df; }
+.speak-btn.speaking { background:var(--peach2); color:white; border-color:var(--peach2); animation:pulse-btn 0.7s ease-in-out infinite alternate; }
+@keyframes pulse-btn { from{transform:scale(1)} to{transform:scale(1.06)} }
+
+/* ── MODAL ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(80,40,30,0.4); z-index:1000; align-items:center; justify-content:center; padding:16px; }
+.modal-overlay.open { display:flex; }
+.modal { background:white; border-radius:24px; width:100%; max-width:680px; max-height:90vh; overflow-y:auto; }
+.modal-header-img { width:100%; height:180px; display:flex; align-items:center; justify-content:center; font-size:80px; border-radius:24px 24px 0 0; position:relative; }
+.modal-close { position:absolute; top:12px; right:14px; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.9); border:none; cursor:pointer; font-size:16px; font-weight:700; color:#555; display:flex; align-items:center; justify-content:center; }
+.modal-body { padding:20px 24px 28px; }
+.modal-level-badge { display:inline-block; font-size:12px; font-weight:800; padding:4px 14px; border-radius:100px; color:white; margin-bottom:10px; }
+.modal-title-kr { font-family:'Noto Sans KR',sans-serif; font-size:22px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.modal-title-th { font-size:14px; color:var(--muted); margin-bottom:14px; }
+.modal-speak-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.modal-speak-btn { display:flex; align-items:center; gap:6px; padding:7px 16px; border-radius:100px; border:2px solid #ffd0c8; background:#fff3f0; color:#c04020; font-size:13px; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer; transition:all 0.18s; }
+.modal-speak-btn.speaking { background:var(--peach2); color:white; border-color:var(--peach2); animation:pulse-btn 0.7s ease-in-out infinite alternate; }
+.modal-speed-label { font-size:12px; color:var(--muted); font-weight:700; }
+.modal-speed-select { padding:5px 10px; border-radius:100px; border:1.5px solid var(--border); font-size:12px; font-family:'Nunito',sans-serif; background:white; color:var(--text); cursor:pointer; outline:none; }
+.modal-text { font-family:'Noto Sans KR',sans-serif; font-size:16px; line-height:2.1; color:var(--text); border-left:3px solid var(--peach); padding-left:16px; margin-bottom:20px; }
+.modal-text-th { font-size:14px; line-height:1.9; color:#665555; background:#fff9f5; border-radius:12px; padding:14px 16px; margin-bottom:20px; }
+.vocab-section-title { font-size:12px; font-weight:800; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:10px; }
+.vocab-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; }
+.vocab-card { background:#fff8f5; border:1.5px solid #ffe0d8; border-radius:12px; padding:10px 12px; position:relative; }
+.vocab-kr { font-family:'Noto Sans KR',sans-serif; font-size:16px; font-weight:700; color:var(--text); }
+.vocab-roman { font-size:11px; color:#b08070; margin:2px 0; }
+.vocab-th { font-size:12px; color:#665555; }
+.vocab-speak-btn { position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; border:1.5px solid #ffd0c8; background:#fff3f0; color:#c04020; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; }
+.vocab-speak-btn:hover,.vocab-speak-btn.speaking { background:var(--peach2); color:white; border-color:var(--peach2); }
+
+/* ── WRITE MODE ── */
+#write-panel { display:none; }
+#write-panel.active { display:block; }
+#read-panel.hidden { display:none; }
+
+.write-intro { text-align:center; padding:24px 16px; }
+.write-intro h2 { font-size:20px; font-weight:800; color:var(--text); margin-bottom:6px; }
+.write-intro p { font-size:14px; color:var(--muted); }
+
+.write-mode-btns { display:flex; justify-content:center; gap:10px; margin:16px 0 24px; flex-wrap:wrap; }
+.write-mode-btn { padding:10px 24px; border-radius:100px; border:2px solid var(--border); background:white; font-size:13px; font-weight:800; color:var(--muted); cursor:pointer; font-family:'Nunito',sans-serif; transition:all 0.18s; }
+.write-mode-btn.active { background:var(--peach2); border-color:var(--peach2); color:white; }
+
+.write-level-row { display:flex; justify-content:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+
+.prompt-card { background:white; border-radius:20px; border:1.5px solid var(--border); padding:20px 24px; margin-bottom:16px; }
+.prompt-label { font-size:11px; font-weight:800; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:10px; }
+.prompt-words { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+.prompt-word { font-family:'Noto Sans KR',sans-serif; font-size:15px; font-weight:700; padding:5px 14px; border-radius:100px; background:#fef3f0; color:#c04020; border:1.5px solid #ffd0c8; }
+.prompt-hint { font-size:12px; color:var(--muted); margin-top:8px; }
+
+.write-textarea { width:100%; min-height:140px; padding:14px 16px; border-radius:16px; border:2px solid var(--border); font-size:15px; font-family:'Noto Sans KR','Nunito',sans-serif; color:var(--text); resize:vertical; outline:none; transition:border-color 0.2s; line-height:1.8; }
+.write-textarea:focus { border-color:var(--peach2); }
+.char-count { font-size:11px; color:var(--muted); text-align:right; margin-top:4px; margin-bottom:12px; }
+
+/* User info form */
+.user-form { background:#fff9f5; border-radius:16px; border:1.5px solid var(--border); padding:16px 20px; margin-bottom:16px; }
+.user-form-title { font-size:12px; font-weight:800; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:12px; }
+.user-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.user-input-wrap { display:flex; flex-direction:column; gap:4px; }
+.user-input-wrap.full { grid-column:1/-1; }
+.user-input-label { font-size:11px; font-weight:700; color:var(--muted); }
+.user-input { padding:8px 14px; border-radius:100px; border:1.5px solid var(--border); font-size:13px; font-family:'Nunito',sans-serif; outline:none; background:white; color:var(--text); transition:border-color 0.2s; }
+.user-input:focus { border-color:var(--peach2); }
+
+.submit-btn { width:100%; padding:13px; border-radius:100px; border:none; background:linear-gradient(135deg,#ff8c73,#f9638a); color:white; font-size:15px; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer; transition:opacity 0.2s,transform 0.1s; }
+.submit-btn:hover { opacity:0.9; }
+.submit-btn:active { transform:scale(0.98); }
+.submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+/* AI feedback */
+.ai-feedback { background:white; border-radius:20px; border:1.5px solid #ffd0c8; padding:20px 24px; margin-top:16px; display:none; }
+.ai-feedback.show { display:block; animation:popIn 0.3s ease; }
+.ai-feedback-title { font-size:13px; font-weight:800; color:var(--peach2); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+.ai-feedback-body { font-size:14px; line-height:1.85; color:var(--text); white-space:pre-wrap; }
+.ai-score { display:inline-flex; align-items:center; gap:6px; background:#fff3f0; border:1.5px solid #ffd0c8; border-radius:100px; padding:4px 14px; font-size:13px; font-weight:800; color:var(--peach2); margin-bottom:12px; }
+
+/* ── MISC ── */
+.page-count { text-align:center; font-size:13px; color:var(--muted); margin-top:20px; }
+.load-more-btn { display:block; margin:16px auto 0; padding:10px 34px; border-radius:100px; border:2px solid var(--peach2); background:white; color:var(--peach2); font-size:13px; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer; transition:all 0.18s; }
+.load-more-btn:hover { background:var(--peach2); color:white; }
+.footer-kr { text-align:center; font-family:'Noto Sans KR',sans-serif; font-size:13px; color:#ddb8b0; margin-top:12px; }
+
+/* badge bg colors */
+.bg-beginner    { background:#2aaa7a; }
+.bg-elementary  { background:#3a8ee0; }
+.bg-intermediate{ background:#d09000; }
+.bg-topik1      { background:#e06030; }
+.bg-topik2      { background:#7050c0; }
+.bg-beginner-soft    { background:linear-gradient(135deg,#c8f7eb,#e0fff7); }
+.bg-elementary-soft  { background:linear-gradient(135deg,#cce8ff,#e8f5ff); }
+.bg-intermediate-soft{ background:linear-gradient(135deg,#fff0b3,#fffae0); }
+.bg-topik1-soft      { background:linear-gradient(135deg,#ffd5cc,#fff0ec); }
+.bg-topik2-soft      { background:linear-gradient(135deg,#e8deff,#f5f0ff); }
+
+.empty-msg { grid-column:1/-1; text-align:center; padding:48px 24px; color:var(--muted); font-size:16px; }
+
+/* loading spinner */
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.4); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<!-- Weather canvas -->
+<canvas id="weather-canvas"></canvas>
+
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <span class="header-deco">🌸</span>
+    <span class="header-deco">✨</span>
+    <span class="header-deco">🍀</span>
+    <span class="header-deco">🌟</span>
+    <div class="logo">한국어 독서실</div>
+    <div class="logo-kr">Korean Reading Room</div>
+    <div class="header-sub">มาเรียนภาษาเกาหลีผ่านเรื่องสั้นด้วยกันเถอะ 🌸</div>
+    <div class="weather-badge" id="weather-badge">🌤 กำลังโหลดอากาศโซล...</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-pill online"><div class="blink"></div><span id="online-count">–</span> คนออนไลน์</div>
+    <div class="stat-pill total">👁 เข้าชมทั้งหมด <span id="total-count" style="margin-left:4px">–</span> ครั้ง</div>
+    <div class="stat-pill read">📖 อ่านไปแล้ว <span id="articles-read-count" style="margin-left:4px">–</span> บทความ</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('read')">📚 อ่านเรื่องสั้น</button>
+    <button class="tab-btn" onclick="switchTab('write')">✍️ เขียนฝึกภาษา</button>
+  </div>
+
+  <!-- READ PANEL -->
+  <div id="read-panel">
+    <div class="level-section">
+      <div class="section-label">เลือกระดับที่ต้องการ</div>
+      <div class="level-btns">
+        <div class="level-row">
+          <button class="lvl-btn active" data-level="all">🌈 ทั้งหมด</button>
+          <button class="lvl-btn" data-level="beginner">🌱 Beginner <span class="lvl-sub">ม.ต้น 1A</span></button>
+          <button class="lvl-btn" data-level="elementary">🌿 Elementary <span class="lvl-sub">1B–2A</span></button>
+          <button class="lvl-btn" data-level="intermediate">🌻 Intermediate <span class="lvl-sub">2B–3A</span></button>
+        </div>
+        <div class="level-row">
+          <button class="lvl-btn" data-level="topik1">🌺 TOPIK I <span class="lvl-sub">Level 1–2</span></button>
+          <button class="lvl-btn" data-level="topik2">💎 TOPIK II <span class="lvl-sub">Level 3–6</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <input class="search-box" id="search" placeholder="🔍 ค้นหาเรื่อง / คำศัพท์ / หัวข้อ...">
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="page-count" id="page-count"></div>
+    <button class="load-more-btn" id="load-more" style="display:none">โหลดเพิ่ม ✨</button>
+    <div class="footer-kr" style="margin-top:32px">한국어 공부 화이팅! 🌸</div>
+  </div>
+
+  <!-- WRITE PANEL -->
+  <div id="write-panel">
+    <div class="write-intro">
+      <h2>✍️ ฝึกเขียนภาษาเกาหลี</h2>
+      <p>เลือกโหมดและระดับ แล้วเขียน — AI จะช่วยตรวจให้ค่ะ</p>
+    </div>
+    <div class="write-mode-btns">
+      <button class="write-mode-btn active" onclick="setWriteMode('sentence')">📝 เขียนประโยค</button>
+      <button class="write-mode-btn" onclick="setWriteMode('essay')">📄 เขียนเรียงความ</button>
+    </div>
+    <div class="write-level-row">
+      <button class="lvl-btn active" data-wlevel="beginner">🌱 Beginner</button>
+      <button class="lvl-btn" data-wlevel="elementary">🌿 Elementary</button>
+      <button class="lvl-btn" data-wlevel="intermediate">🌻 Intermediate</button>
+      <button class="lvl-btn" data-wlevel="topik1">🌺 TOPIK I</button>
+      <button class="lvl-btn" data-wlevel="topik2">💎 TOPIK II</button>
+    </div>
+
+    <div class="prompt-card" id="prompt-card">
+      <div class="prompt-label">📌 คำที่ต้องใช้</div>
+      <div class="prompt-words" id="prompt-words"></div>
+      <div class="prompt-hint" id="prompt-hint"></div>
+    </div>
+
+    <textarea class="write-textarea" id="write-area" placeholder="เขียนภาษาเกาหลีที่นี่... (한국어로 써주세요)"></textarea>
+    <div class="char-count"><span id="char-count">0</span> ตัวอักษร</div>
+
+    <!-- User info -->
+    <div class="user-form">
+      <div class="user-form-title">👤 ข้อมูลผู้เรียน (เพื่อส่งผลตรวจและเก็บ log)</div>
+      <div class="user-form-grid">
+        <div class="user-input-wrap">
+          <div class="user-input-label">ชื่อเล่น *</div>
+          <input class="user-input" id="u-name" placeholder="เช่น นุ่น, แอม" maxlength="30">
+        </div>
+        <div class="user-input-wrap">
+          <div class="user-input-label">อายุ</div>
+          <input class="user-input" id="u-age" placeholder="เช่น 22" type="number" min="1" max="99">
+        </div>
+        <div class="user-input-wrap full">
+          <div class="user-input-label">Email (รับผลตรวจทาง email)</div>
+          <input class="user-input" id="u-email" placeholder="your@email.com" type="email" style="border-radius:12px">
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitWrite()">📨 ส่งงานให้ครูตรวจ</button>
+
+    <div class="ai-feedback" id="ai-feedback">
+      <div class="ai-feedback-title">✅ ส่งงานเรียบร้อยแล้ว!</div>
+      <div class="ai-feedback-body" id="ai-feedback-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header-img" id="m-img"></div>
+    <div class="modal-body">
+      <div id="m-badge" class="modal-level-badge"></div>
+      <div class="modal-title-kr" id="m-title-kr"></div>
+      <div class="modal-title-th" id="m-title-th"></div>
+      <div class="modal-speak-row">
+        <button class="modal-speak-btn" id="m-speak-btn" onclick="modalSpeak()">🔊 ฟังเรื่อง</button>
+        <span class="modal-speed-label">ความเร็ว:</span>
+        <select class="modal-speed-select" id="m-speed">
+          <option value="0.6">ช้ามาก 🐢</option>
+          <option value="0.8" selected>ช้า 🐌</option>
+          <option value="1.0">ปกติ</option>
+          <option value="1.2">เร็ว</option>
+        </select>
+      </div>
+      <div class="modal-text" id="m-text"></div>
+      <div class="modal-text-th" id="m-text-th"></div>
+      <div class="vocab-section-title">📚 คำศัพท์สำคัญ</div>
+      <div class="vocab-grid" id="m-vocab"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 🔧 SETUP — แก้ค่าด้านล่างก่อน deploy
+// ============================================================
+const CLAUDE_API_KEY = 'YOUR_CLAUDE_API_KEY';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAlhGKXztTB3Q1Vua0sdzzkFrZSO9G1CwxIu-wDwDKjQCtS6_2SRMtupW25MIhvYSp/exec';
+// ============================================================
+
+const LEVELS = {
+  beginner:     { label:'🌱 Beginner',     badge:'bg-beginner',     soft:'bg-beginner-soft',     desc:'1A' },
+  elementary:   { label:'🌿 Elementary',   badge:'bg-elementary',   soft:'bg-elementary-soft',   desc:'1B–2A' },
+  intermediate: { label:'🌻 Intermediate', badge:'bg-intermediate', soft:'bg-intermediate-soft', desc:'2B–3A' },
+  topik1:       { label:'🌺 TOPIK I',      badge:'bg-topik1',       soft:'bg-topik1-soft',        desc:'TOPIK 1–2' },
+  topik2:       { label:'💎 TOPIK II',     badge:'bg-topik2',       soft:'bg-topik2-soft',        desc:'TOPIK 3–6' },
+};
+
+const ARTICLES_DATA = [
+  { id:1,  level:'beginner',     emoji:'🐱', titleKr:'고양이',           titleTh:'แมว',
+    story:'저는 고양이가 있어요. 이름은 나비예요. 나비는 하얗고 귀여워요. 나비는 우유를 좋아해요.',
+    storyTh:'ฉันมีแมว ชื่อนาบี นาบีสีขาวและน่ารัก นาบีชอบนม',
+    vocab:[{kr:'고양이',rom:'go-yang-i',th:'แมว'},{kr:'이름',rom:'i-reum',th:'ชื่อ'},{kr:'하얗다',rom:'ha-ya-ta',th:'สีขาว'},{kr:'귀엽다',rom:'gwi-yeop-da',th:'น่ารัก'},{kr:'우유',rom:'u-yu',th:'นม'},{kr:'좋아하다',rom:'jo-a-ha-da',th:'ชอบ'}] },
+  { id:2,  level:'beginner',     emoji:'🍎', titleKr:'과일',             titleTh:'ผลไม้',
+    story:'사과가 빨개요. 바나나가 노래요. 저는 과일을 좋아해요. 매일 먹어요.',
+    storyTh:'แอปเปิ้ลสีแดง กล้วยสีเหลือง ฉันชอบผลไม้ กินทุกวัน',
+    vocab:[{kr:'사과',rom:'sa-gwa',th:'แอปเปิ้ล'},{kr:'바나나',rom:'ba-na-na',th:'กล้วย'},{kr:'빨갛다',rom:'ppal-ga-ta',th:'สีแดง'},{kr:'노랗다',rom:'no-ra-ta',th:'สีเหลือง'},{kr:'과일',rom:'gwa-il',th:'ผลไม้'},{kr:'매일',rom:'mae-il',th:'ทุกวัน'}] },
+  { id:3,  level:'beginner',     emoji:'👨‍👩‍👧', titleKr:'우리 가족',       titleTh:'ครอบครัวของฉัน',
+    story:'우리 가족은 넷이에요. 아빠, 엄마, 오빠, 그리고 저예요. 우리는 서울에 살아요.',
+    storyTh:'ครอบครัวของฉันมี 4 คน คือ พ่อ แม่ พี่ชาย และฉัน เราอาศัยอยู่ในโซล',
+    vocab:[{kr:'가족',rom:'ga-jok',th:'ครอบครัว'},{kr:'아빠',rom:'a-ppa',th:'พ่อ'},{kr:'엄마',rom:'eom-ma',th:'แม่'},{kr:'오빠',rom:'o-ppa',th:'พี่ชาย (ผู้หญิงเรียก)'},{kr:'살다',rom:'sal-da',th:'อาศัยอยู่'},{kr:'서울',rom:'seo-ul',th:'โซล'}] },
+  { id:4,  level:'beginner',     emoji:'☀️', titleKr:'날씨',             titleTh:'อากาศ',
+    story:'오늘은 날씨가 맑아요. 하늘이 파래요. 바람이 불어요. 기분이 좋아요.',
+    storyTh:'วันนี้อากาศแจ่มใส ท้องฟ้าสีฟ้า ลมพัด รู้สึกดีมาก',
+    vocab:[{kr:'날씨',rom:'nal-ssi',th:'อากาศ'},{kr:'맑다',rom:'mal-ta',th:'แจ่มใส'},{kr:'하늘',rom:'ha-neul',th:'ท้องฟ้า'},{kr:'파랗다',rom:'pa-ra-ta',th:'สีฟ้า'},{kr:'바람',rom:'ba-ram',th:'ลม'},{kr:'기분',rom:'gi-bun',th:'อารมณ์ / ความรู้สึก'}] },
+  { id:5,  level:'beginner',     emoji:'🏫', titleKr:'학교',             titleTh:'โรงเรียน',
+    story:'저는 학교에 가요. 친구들을 만나요. 공부가 재미있어요. 선생님이 친절해요.',
+    storyTh:'ฉันไปโรงเรียน เจอเพื่อนๆ การเรียนสนุก คุณครูใจดี',
+    vocab:[{kr:'학교',rom:'hak-gyo',th:'โรงเรียน'},{kr:'친구',rom:'chin-gu',th:'เพื่อน'},{kr:'만나다',rom:'man-na-da',th:'พบ/เจอ'},{kr:'공부',rom:'gong-bu',th:'การเรียน'},{kr:'재미있다',rom:'jae-mi-it-da',th:'สนุก/น่าสนใจ'},{kr:'선생님',rom:'seon-saeng-nim',th:'คุณครู'}] },
+  { id:6,  level:'beginner',     emoji:'🍚', titleKr:'밥',               titleTh:'ข้าว',
+    story:'저는 밥을 먹어요. 김치도 있어요. 맛있어요. 배가 불러요.',
+    storyTh:'ฉันกินข้าว มีกิมจิด้วย อร่อยมาก อิ่มแล้ว',
+    vocab:[{kr:'밥',rom:'bap',th:'ข้าว'},{kr:'먹다',rom:'meok-da',th:'กิน'},{kr:'김치',rom:'gim-chi',th:'กิมจิ'},{kr:'맛있다',rom:'ma-sit-da',th:'อร่อย'},{kr:'배',rom:'bae',th:'ท้อง'},{kr:'배부르다',rom:'bae-bu-reu-da',th:'อิ่ม'}] },
+  { id:7,  level:'beginner',     emoji:'🐶', titleKr:'강아지',           titleTh:'ลูกหมา',
+    story:'공원에 강아지가 있어요. 강아지가 뛰어요. 정말 귀여워요. 같이 놀아요.',
+    storyTh:'มีลูกหมาในสวนสาธารณะ ลูกหมาวิ่งเล่น น่ารักมาก เล่นด้วยกัน',
+    vocab:[{kr:'강아지',rom:'gang-a-ji',th:'ลูกหมา'},{kr:'공원',rom:'gong-won',th:'สวนสาธารณะ'},{kr:'뛰다',rom:'dtwi-da',th:'วิ่ง'},{kr:'정말',rom:'jeong-mal',th:'จริงๆ'},{kr:'귀엽다',rom:'gwi-yeop-da',th:'น่ารัก'},{kr:'같이',rom:'ga-chi',th:'ด้วยกัน'}] },
+  { id:8,  level:'beginner',     emoji:'🎵', titleKr:'음악',             titleTh:'ดนตรี',
+    story:'저는 음악을 좋아해요. 노래를 불러요. 기타도 쳐요. 행복해요.',
+    storyTh:'ฉันชอบดนตรี ร้องเพลง เล่นกีตาร์ด้วย มีความสุข',
+    vocab:[{kr:'음악',rom:'eum-ak',th:'ดนตรี'},{kr:'노래',rom:'no-rae',th:'เพลง'},{kr:'부르다',rom:'bu-reu-da',th:'ร้อง'},{kr:'기타',rom:'gi-ta',th:'กีตาร์'},{kr:'치다',rom:'chi-da',th:'เล่น (ดนตรี)'},{kr:'행복하다',rom:'haeng-bok-ha-da',th:'มีความสุข'}] },
+  { id:9,  level:'elementary',   emoji:'🚌', titleKr:'버스 여행',         titleTh:'การเดินทางด้วยรถบัส',
+    story:'저는 오늘 버스를 타고 시장에 갔어요. 버스에는 사람이 많았어요. 창문 밖으로 도시 풍경이 예뻤어요. 시장에서 채소를 샀어요.',
+    storyTh:'วันนี้ฉันนั่งรถบัสไปตลาด บนรถมีคนเยอะ วิวเมืองนอกหน้าต่างสวยมาก ซื้อผักที่ตลาด',
+    vocab:[{kr:'버스',rom:'beo-seu',th:'รถบัส'},{kr:'타다',rom:'ta-da',th:'ขึ้น/นั่ง (ยานพาหนะ)'},{kr:'시장',rom:'si-jang',th:'ตลาด'},{kr:'창문',rom:'chang-mun',th:'หน้าต่าง'},{kr:'풍경',rom:'pung-gyeong',th:'วิว/ทิวทัศน์'},{kr:'채소',rom:'chae-so',th:'ผัก'},{kr:'사다',rom:'sa-da',th:'ซื้อ'}] },
+  { id:10, level:'elementary',   emoji:'☕', titleKr:'카페에서',           titleTh:'ที่คาเฟ่',
+    story:'친구와 카페에 갔어요. 아메리카노 두 잔을 주문했어요. 우리는 오랜만에 만나서 이야기를 많이 했어요. 시간이 빨리 지나갔어요.',
+    storyTh:'ไปคาเฟ่กับเพื่อน สั่งอเมริกาโน่สองแก้ว คุยกันเยอะเพราะนานๆ เจอกันที เวลาผ่านไปไว',
+    vocab:[{kr:'카페',rom:'ka-pe',th:'คาเฟ่'},{kr:'주문하다',rom:'ju-mun-ha-da',th:'สั่ง'},{kr:'오랜만에',rom:'o-raen-man-e',th:'นานๆ ที'},{kr:'이야기',rom:'i-ya-gi',th:'การสนทนา'},{kr:'빨리',rom:'ppal-li',th:'เร็ว'},{kr:'지나가다',rom:'ji-na-ga-da',th:'ผ่านไป'}] },
+  { id:11, level:'elementary',   emoji:'🌧️', titleKr:'비 오는 날',        titleTh:'วันที่ฝนตก',
+    story:'아침부터 비가 왔어요. 우산을 챙겨서 다행이에요. 빗소리를 들으면서 책을 읽었어요. 비 오는 날은 따뜻한 음식이 먹고 싶어요.',
+    storyTh:'ฝนตกตั้งแต่เช้า โชคดีที่พกร่มมา อ่านหนังสือฟังเสียงฝน วันที่ฝนตกอยากกินอาหารอุ่นๆ',
+    vocab:[{kr:'비',rom:'bi',th:'ฝน'},{kr:'우산',rom:'u-san',th:'ร่ม'},{kr:'챙기다',rom:'chaeng-gi-da',th:'เตรียม/พก'},{kr:'다행이다',rom:'da-haeng-i-da',th:'โชคดี'},{kr:'빗소리',rom:'bit-so-ri',th:'เสียงฝน'},{kr:'따뜻하다',rom:'tta-tteus-ha-da',th:'อบอุ่น'}] },
+  { id:12, level:'elementary',   emoji:'🎂', titleKr:'생일 파티',          titleTh:'ปาร์ตี้วันเกิด',
+    story:'오늘은 제 생일이에요. 친구들이 깜짝 파티를 해줬어요. 케이크에 초를 불었어요. 선물도 많이 받았어요. 정말 행복한 하루였어요.',
+    storyTh:'วันนี้เป็นวันเกิดฉัน เพื่อนๆ จัดปาร์ตี้เซอร์ไพรส์ให้ เป่าเทียนบนเค้ก ได้รับของขวัญเยอะมาก เป็นวันที่มีความสุขมาก',
+    vocab:[{kr:'생일',rom:'saeng-il',th:'วันเกิด'},{kr:'깜짝',rom:'kkam-jjak',th:'เซอร์ไพรส์'},{kr:'케이크',rom:'ke-i-keu',th:'เค้ก'},{kr:'초',rom:'cho',th:'เทียน'},{kr:'선물',rom:'seon-mul',th:'ของขวัญ'},{kr:'받다',rom:'bat-da',th:'รับ'}] },
+  { id:13, level:'elementary',   emoji:'🏕️', titleKr:'주말 캠핑',          titleTh:'แคมป์ปิ้งวันหยุด',
+    story:'가족과 함께 캠핑을 갔어요. 텐트를 치고 불을 피웠어요. 별이 정말 많았어요. 자연 속에서 하루를 보냈어요.',
+    storyTh:'ไปแคมป์ปิ้งกับครอบครัว ตั้งเต็นท์และก่อกองไฟ ดาวเยอะมาก ใช้เวลาหนึ่งวันในธรรมชาติ',
+    vocab:[{kr:'캠핑',rom:'kaem-ping',th:'แคมป์ปิ้ง'},{kr:'텐트',rom:'ten-teu',th:'เต็นท์'},{kr:'불',rom:'bul',th:'ไฟ'},{kr:'별',rom:'byeol',th:'ดาว'},{kr:'자연',rom:'ja-yeon',th:'ธรรมชาติ'},{kr:'보내다',rom:'bo-nae-da',th:'ใช้เวลา/ส่ง'}] },
+  { id:14, level:'elementary',   emoji:'📚', titleKr:'도서관에서',          titleTh:'ที่ห้องสมุด',
+    story:'오늘 도서관에서 공부했어요. 조용해서 집중이 잘 됐어요. 역사책 한 권을 빌렸어요. 다음 주까지 읽어야 해요.',
+    storyTh:'วันนี้เรียนที่ห้องสมุด เงียบดีจนตั้งสมาธิได้ดี ยืมหนังสือประวัติศาสตร์หนึ่งเล่ม ต้องอ่านให้เสร็จภายในสัปดาห์หน้า',
+    vocab:[{kr:'도서관',rom:'do-seo-gwan',th:'ห้องสมุด'},{kr:'조용하다',rom:'jo-yong-ha-da',th:'เงียบ'},{kr:'집중',rom:'jip-jung',th:'สมาธิ'},{kr:'역사',rom:'yeok-sa',th:'ประวัติศาสตร์'},{kr:'권',rom:'gwon',th:'เล่ม (ลักษณนาม)'},{kr:'빌리다',rom:'bil-li-da',th:'ยืม'}] },
+  { id:15, level:'elementary',   emoji:'🌺', titleKr:'봄 소풍',            titleTh:'ทัศนศึกษาฤดูใบไม้ผลิ',
+    story:'봄이 왔어요. 벚꽃이 피었어요. 친구들과 공원에서 소풍을 즐겼어요. 도시락을 먹으면서 이야기했어요.',
+    storyTh:'ฤดูใบไม้ผลิมาแล้ว ดอกซากุระบาน สนุกกับการปิกนิกที่สวนกับเพื่อนๆ คุยกันพลางกินข้าวกล่อง',
+    vocab:[{kr:'봄',rom:'bom',th:'ฤดูใบไม้ผลิ'},{kr:'벚꽃',rom:'beot-kkot',th:'ดอกซากุระ'},{kr:'피다',rom:'pi-da',th:'บาน'},{kr:'소풍',rom:'so-pung',th:'ปิกนิก'},{kr:'즐기다',rom:'jeul-gi-da',th:'สนุก/เพลิดเพลิน'},{kr:'도시락',rom:'do-si-rak',th:'ข้าวกล่อง'}] },
+  { id:16, level:'intermediate', emoji:'🏙️', titleKr:'서울의 밤',           titleTh:'คืนที่โซล',
+    story:'서울의 밤은 화려하고 아름답습니다. 한강 변에 앉아서 야경을 감상했습니다. 불빛이 물에 반사되어 마치 별처럼 반짝였습니다. 이 도시의 에너지가 느껴졌습니다.',
+    storyTh:'คืนที่โซลสวยงามและหรูหรา นั่งริมแม่น้ำฮันดูวิวกลางคืน แสงไฟสะท้อนน้ำระยิบระยับราวกับดาว รู้สึกถึงพลังงานของเมืองนี้',
+    vocab:[{kr:'화려하다',rom:'hwa-ryeo-ha-da',th:'หรูหรา/อลังการ'},{kr:'야경',rom:'ya-gyeong',th:'วิวกลางคืน'},{kr:'감상하다',rom:'gam-sang-ha-da',th:'ชื่นชม'},{kr:'반사되다',rom:'ban-sa-doe-da',th:'สะท้อน'},{kr:'반짝이다',rom:'ban-jjak-i-da',th:'ระยิบระยับ'},{kr:'에너지',rom:'e-neo-ji',th:'พลังงาน'},{kr:'느끼다',rom:'neu-kki-da',th:'รู้สึก'}] },
+  { id:17, level:'intermediate', emoji:'👩‍🍳', titleKr:'요리 수업',          titleTh:'ชั้นเรียนทำอาหาร',
+    story:'처음으로 요리 수업을 들었습니다. 선생님이 김치찌개 만드는 법을 가르쳐 주셨습니다. 재료를 손질하고 순서대로 따라 했습니다. 생각보다 어렵지 않아서 뿌듯했습니다.',
+    storyTh:'เรียนทำอาหารเป็นครั้งแรก ครูสอนวิธีทำแกงกิมจิ เตรียมวัตถุดิบแล้วทำตามขั้นตอน ง่ายกว่าที่คิดจึงรู้สึกภูมิใจ',
+    vocab:[{kr:'요리',rom:'yo-ri',th:'การทำอาหาร'},{kr:'수업',rom:'su-eop',th:'ชั้นเรียน'},{kr:'재료',rom:'jae-ryo',th:'วัตถุดิบ'},{kr:'손질하다',rom:'son-jil-ha-da',th:'เตรียม/ตกแต่ง'},{kr:'순서',rom:'sun-seo',th:'ลำดับ/ขั้นตอน'},{kr:'뿌듯하다',rom:'ppu-deut-ha-da',th:'ภูมิใจ'}] },
+  { id:18, level:'intermediate', emoji:'✈️', titleKr:'첫 해외여행',         titleTh:'การเดินทางต่างประเทศครั้งแรก',
+    story:'처음으로 혼자 해외여행을 떠났습니다. 비행기 안에서 설레는 마음이 가득했습니다. 낯선 도시에서 길을 잃기도 했지만, 그것도 좋은 경험이었습니다. 여행을 통해 많이 성장했습니다.',
+    storyTh:'ออกเดินทางต่างประเทศคนเดียวเป็นครั้งแรก ในเครื่องบินรู้สึกตื่นเต้นมาก หลงทางในเมืองแปลกหน้าแต่ก็เป็นประสบการณ์ดี เติบโตขึ้นมากจากการเดินทาง',
+    vocab:[{kr:'해외여행',rom:'hae-oe-yeo-haeng',th:'การเดินทางต่างประเทศ'},{kr:'떠나다',rom:'tteo-na-da',th:'ออกเดินทาง'},{kr:'설레다',rom:'seol-le-da',th:'ตื่นเต้น/ใจเต้น'},{kr:'낯설다',rom:'nat-seol-da',th:'ไม่คุ้นเคย'},{kr:'경험',rom:'gyeong-heom',th:'ประสบการณ์'},{kr:'성장하다',rom:'seong-jang-ha-da',th:'เติบโต'}] },
+  { id:19, level:'intermediate', emoji:'🎭', titleKr:'뮤지컬 관람',          titleTh:'ชมมิวสิคัล',
+    story:'친구의 권유로 처음으로 뮤지컬을 보았습니다. 화려한 무대와 배우들의 열정적인 연기에 감동받았습니다. 음악이 끝나고도 여운이 오래 남았습니다. 앞으로도 자주 보고 싶습니다.',
+    storyTh:'ดูมิวสิคัลเป็นครั้งแรกตามคำแนะนำของเพื่อน ประทับใจมากกับเวทีที่หรูหราและการแสดงอันเร่าร้อน ความรู้สึกยังคงอยู่นานหลังดนตรีจบ อยากดูบ่อยๆ',
+    vocab:[{kr:'권유',rom:'gwon-yu',th:'การแนะนำ/ชักชวน'},{kr:'무대',rom:'mu-dae',th:'เวที'},{kr:'배우',rom:'bae-u',th:'นักแสดง'},{kr:'열정적',rom:'yeol-jeong-jeok',th:'เร่าร้อน'},{kr:'감동받다',rom:'gam-dong-bat-da',th:'ประทับใจ'},{kr:'여운',rom:'yeo-un',th:'ความรู้สึกที่ยังคงอยู่'}] },
+  { id:20, level:'intermediate', emoji:'🌄', titleKr:'산 등반',             titleTh:'ปีนภูเขา',
+    story:'이른 아침에 산에 오르기 시작했습니다. 숨이 차고 힘들었지만 포기하지 않았습니다. 정상에 도착했을 때 눈앞에 펼쳐진 경치는 모든 고생을 잊게 해주었습니다.',
+    storyTh:'เริ่มปีนเขาแต่เช้าตรู่ แม้จะหอบและเหนื่อย แต่ไม่ยอมแพ้ เมื่อถึงยอดเขา วิวที่เปิดออกตรงหน้าทำให้ลืมความเหนื่อยทั้งหมด',
+    vocab:[{kr:'등반',rom:'deung-ban',th:'การปีนป่าย'},{kr:'숨이 차다',rom:'sum-i cha-da',th:'หายใจไม่ทัน/หอบ'},{kr:'포기하다',rom:'po-gi-ha-da',th:'ยอมแพ้'},{kr:'정상',rom:'jeong-sang',th:'ยอดเขา'},{kr:'경치',rom:'gyeong-chi',th:'ทิวทัศน์'},{kr:'펼치다',rom:'pyeol-chi-da',th:'เปิดออก/แผ่'}] },
+  { id:21, level:'topik1',       emoji:'🏢', titleKr:'직장 생활',           titleTh:'ชีวิตการทำงาน',
+    story:'새로운 직장에 입사한 지 세 달이 지났습니다. 처음에는 모르는 것도 많고 실수도 많았지만, 동료들의 도움으로 점점 적응하고 있습니다. 열심히 노력하면 반드시 성장할 수 있다고 믿습니다.',
+    storyTh:'ผ่านไปสามเดือนหลังเข้างานใหม่ ตอนแรกไม่รู้หลายอย่างและผิดพลาดบ่อย แต่ด้วยความช่วยเหลือของเพื่อนร่วมงาน ค่อยๆ ปรับตัวได้',
+    vocab:[{kr:'직장',rom:'jik-jang',th:'ที่ทำงาน'},{kr:'입사하다',rom:'ip-sa-ha-da',th:'เข้าทำงาน'},{kr:'실수',rom:'sil-su',th:'ความผิดพลาด'},{kr:'동료',rom:'dong-ryo',th:'เพื่อนร่วมงาน'},{kr:'적응하다',rom:'jeok-eung-ha-da',th:'ปรับตัว'},{kr:'반드시',rom:'ban-deu-si',th:'อย่างแน่นอน'}] },
+  { id:22, level:'topik1',       emoji:'💡', titleKr:'환경 문제',           titleTh:'ปัญหาสิ่งแวดล้อม',
+    story:'최근 환경 문제가 심각해지고 있습니다. 지구 온난화로 인해 기온이 상승하고 있으며, 해수면도 점차 높아지고 있습니다. 우리 모두가 일상에서 작은 노력을 기울여야 합니다.',
+    storyTh:'ปัจจุบันปัญหาสิ่งแวดล้อมรุนแรงขึ้น อุณหภูมิสูงขึ้นเนื่องจากภาวะโลกร้อน และระดับน้ำทะเลก็สูงขึ้นเรื่อยๆ พวกเราทุกคนต้องใส่ใจในชีวิตประจำวัน',
+    vocab:[{kr:'환경',rom:'hwan-gyeong',th:'สิ่งแวดล้อม'},{kr:'심각하다',rom:'sim-gak-ha-da',th:'รุนแรง/ร้ายแรง'},{kr:'온난화',rom:'on-nan-hwa',th:'ภาวะโลกร้อน'},{kr:'기온',rom:'gi-on',th:'อุณหภูมิ'},{kr:'해수면',rom:'hae-su-myeon',th:'ระดับน้ำทะเล'},{kr:'기울이다',rom:'gi-u-ri-da',th:'ใส่ใจ/ทุ่มเท'}] },
+  { id:23, level:'topik1',       emoji:'📱', titleKr:'스마트폰의 영향',      titleTh:'อิทธิพลของสมาร์ทโฟน',
+    story:'스마트폰은 우리 생활을 편리하게 해주지만 부작용도 있습니다. 과도한 사용으로 수면 장애나 집중력 저하가 생길 수 있습니다. 적절한 사용 습관이 중요합니다.',
+    storyTh:'สมาร์ทโฟนทำให้ชีวิตสะดวกขึ้น แต่ก็มีผลข้างเคียง การใช้มากเกินไปอาจทำให้นอนไม่หลับหรือสมาธิลดลง นิสัยการใช้ที่เหมาะสมเป็นเรื่องสำคัญ',
+    vocab:[{kr:'편리하다',rom:'pyeol-li-ha-da',th:'สะดวก'},{kr:'부작용',rom:'bu-jak-yong',th:'ผลข้างเคียง'},{kr:'과도하다',rom:'gwa-do-ha-da',th:'มากเกินไป'},{kr:'수면 장애',rom:'su-myeon jang-ae',th:'การนอนไม่หลับ'},{kr:'집중력',rom:'jip-jung-ryeok',th:'สมาธิ'},{kr:'습관',rom:'seup-gwan',th:'นิสัย/ความเคยชิน'}] },
+  { id:24, level:'topik1',       emoji:'🎓', titleKr:'유학 결심',           titleTh:'ตัดสินใจเรียนต่อต่างประเทศ',
+    story:'오랫동안 고민하던 끝에 유학을 결심했습니다. 가족들은 처음에 반대했지만 제 의지를 보고 결국 지지해주었습니다. 새로운 환경에서의 도전이 두렵지만 기대가 더 큽니다.',
+    storyTh:'ตัดสินใจเรียนต่อต่างประเทศหลังคิดนานมาก ครอบครัวคัดค้านตอนแรกแต่พอเห็นความตั้งใจก็สนับสนุน การท้าทายในสิ่งแวดล้อมใหม่น่ากลัวแต่รู้สึกตื่นเต้นมากกว่า',
+    vocab:[{kr:'고민하다',rom:'go-min-ha-da',th:'คิดหนัก/วิตกกังวล'},{kr:'결심하다',rom:'gyeol-sim-ha-da',th:'ตัดสินใจ'},{kr:'반대하다',rom:'ban-dae-ha-da',th:'คัดค้าน'},{kr:'의지',rom:'eui-ji',th:'ความตั้งใจ'},{kr:'도전',rom:'do-jeon',th:'การท้าทาย'},{kr:'기대',rom:'gi-dae',th:'ความคาดหวัง'}] },
+  { id:25, level:'topik2',       emoji:'🧠', titleKr:'인공지능의 미래',      titleTh:'อนาคตของปัญญาประดิษฐ์',
+    story:'인공지능 기술이 급속도로 발전하면서 다양한 산업 분야에서 활용되고 있습니다. 하지만 이로 인한 일자리 감소와 개인 정보 보호 문제는 사회적으로 심층적인 논의가 필요합니다. 기술의 혜택을 누리면서도 윤리적 기준을 마련하는 것이 중요합니다.',
+    storyTh:'เทคโนโลยีปัญญาประดิษฐ์พัฒนาอย่างรวดเร็วและถูกนำไปใช้ในหลายอุตสาหกรรม แต่ปัญหาการลดลงของงานและการคุ้มครองข้อมูลส่วนตัวต้องการการอภิปรายอย่างลึกซึ้งในสังคม',
+    vocab:[{kr:'인공지능',rom:'in-gong-ji-neung',th:'ปัญญาประดิษฐ์'},{kr:'급속도',rom:'geup-sok-do',th:'อย่างรวดเร็ว'},{kr:'활용되다',rom:'hwal-lyong-doe-da',th:'ถูกนำไปใช้'},{kr:'일자리',rom:'il-ja-ri',th:'ตำแหน่งงาน'},{kr:'윤리',rom:'yul-li',th:'จริยธรรม'},{kr:'마련하다',rom:'ma-ryeon-ha-da',th:'กำหนด/จัดให้มี'},{kr:'혜택',rom:'hye-taek',th:'ผลประโยชน์/สิทธิประโยชน์'}] },
+  { id:26, level:'topik2',       emoji:'🌍', titleKr:'세계화의 빛과 그림자', titleTh:'แสงและเงาของโลกาภิวัตน์',
+    story:'세계화는 경제적 성장과 문화 교류라는 긍정적인 측면을 가져왔습니다. 그러나 한편으로는 경제적 불평등이 심화되고, 전통 문화가 소멸할 위기에 처하기도 합니다.',
+    storyTh:'โลกาภิวัตน์นำมาซึ่งการเติบโตทางเศรษฐกิจและการแลกเปลี่ยนวัฒนธรรม แต่ในอีกด้านหนึ่งความไม่เท่าเทียมทางเศรษฐกิจก็ทวีความรุนแรง และวัฒนธรรมดั้งเดิมเสี่ยงต่อการสูญหาย',
+    vocab:[{kr:'세계화',rom:'se-gye-hwa',th:'โลกาภิวัตน์'},{kr:'교류',rom:'gyo-ryu',th:'การแลกเปลี่ยน'},{kr:'긍정적',rom:'geung-jeong-jeok',th:'เชิงบวก'},{kr:'불평등',rom:'bul-pyeong-deung',th:'ความไม่เท่าเทียม'},{kr:'소멸',rom:'so-myeol',th:'การสูญหาย'},{kr:'위기',rom:'wi-gi',th:'วิกฤต'},{kr:'공평하다',rom:'gong-pyeong-ha-da',th:'เท่าเทียม'}] },
+  { id:27, level:'topik2',       emoji:'🏛️', titleKr:'역사적 책임과 화해',   titleTh:'ความรับผิดชอบทางประวัติศาสตร์',
+    story:'과거의 역사적 사건에 대한 책임을 인정하는 것은 진정한 화해의 출발점입니다. 상처를 치유하는 과정은 길고 어렵지만, 서로를 이해하려는 노력 없이는 지속 가능한 평화가 이루어질 수 없습니다.',
+    storyTh:'การยอมรับความรับผิดชอบต่อเหตุการณ์ทางประวัติศาสตร์เป็นจุดเริ่มต้นของการปรองดองที่แท้จริง กระบวนการรักษาบาดแผลนั้นยาวนานและยากลำบาก แต่หากปราศจากความพยายามที่จะเข้าใจกัน สันติภาพที่ยั่งยืนก็ไม่อาจเกิดขึ้นได้',
+    vocab:[{kr:'책임',rom:'chaek-im',th:'ความรับผิดชอบ'},{kr:'화해',rom:'hwa-hae',th:'การปรองดอง'},{kr:'출발점',rom:'chul-bal-jeom',th:'จุดเริ่มต้น'},{kr:'치유하다',rom:'chi-yu-ha-da',th:'รักษา/เยียวยา'},{kr:'지속 가능하다',rom:'ji-sok ga-neung-ha-da',th:'ยั่งยืน'},{kr:'이루어지다',rom:'i-ru-eo-ji-da',th:'เกิดขึ้น/บรรลุ'}] },
+  { id:28, level:'topik2',       emoji:'🧬', titleKr:'생명공학 윤리',        titleTh:'จริยธรรมเทคโนโลยีชีวภาพ',
+    story:'유전자 편집 기술의 발전은 유전 질환 치료에 혁신적인 가능성을 열어주고 있습니다. 하지만 동시에 인간의 유전적 특성을 조작하는 것에 대한 윤리적 우려도 제기되고 있습니다. 과학의 발전과 인간의 존엄성 사이의 균형이 필요합니다.',
+    storyTh:'ความก้าวหน้าของเทคโนโลยีการแก้ไขยีนเปิดโอกาสที่ปฏิวัติในการรักษาโรคทางพันธุกรรม แต่ในเวลาเดียวกันก็มีข้อกังวลทางจริยธรรมเกี่ยวกับการดัดแปลงลักษณะทางพันธุกรรมของมนุษย์',
+    vocab:[{kr:'유전자',rom:'yu-jeon-ja',th:'ยีน/พันธุกรรม'},{kr:'편집',rom:'pyeon-jip',th:'การแก้ไข/ตัดต่อ'},{kr:'혁신적',rom:'hyeok-sin-jeok',th:'ปฏิวัติ/นวัตกรรม'},{kr:'우려',rom:'u-ryeo',th:'ความกังวล'},{kr:'존엄성',rom:'jon-eom-seong',th:'ศักดิ์ศรี'},{kr:'균형',rom:'gyun-hyeong',th:'ความสมดุล'},{kr:'조작하다',rom:'jo-jak-ha-da',th:'ดัดแปลง/จัดการ'}] },
+];
+
+function generateArticles() {
+  const all = [];
+  for (let i = 0; i < 500; i++) {
+    const base = ARTICLES_DATA[i % ARTICLES_DATA.length];
+    all.push({ ...base, id: i + 1 });
+  }
+  return all;
+}
+const ALL_ARTICLES = generateArticles();
+
+// ── WRITE PROMPTS ──
+const WRITE_PROMPTS = {
+  sentence: {
+    beginner:     { words:['학교','친구','좋아하다'], hint:'เขียนประโยคภาษาเกาหลี 2-3 ประโยค ใช้คำเหล่านี้ให้ครบ' },
+    elementary:   { words:['오늘','날씨','기분','좋다'], hint:'เขียนประโยค 3-4 ประโยคเกี่ยวกับวันนี้' },
+    intermediate: { words:['여행','경험','느끼다','성장'], hint:'เขียนประโยค 4-5 ประโยคเกี่ยวกับการเดินทาง' },
+    topik1:       { words:['환경','문제','노력','중요하다'], hint:'เขียนประโยค 4-5 ประโยคเกี่ยวกับสิ่งแวดล้อม' },
+    topik2:       { words:['기술','발전','윤리','균형','사회'], hint:'เขียนประโยค 5-6 ประโยคที่แสดงความคิดเห็นทางสังคม' },
+  },
+  essay: {
+    beginner:     { words:['나','가족','좋아하다','살다'], hint:'เขียนแนะนำตัวเองสั้นๆ 3-5 ประโยค' },
+    elementary:   { words:['주말','친구','먹다','재미있다','이야기'], hint:'เขียนเล่าเรื่องวันหยุดสั้นๆ 5-7 ประโยค' },
+    intermediate: { words:['도시','생활','장점','단점','생각하다'], hint:'เขียนเปรียบเทียบชีวิตในเมืองและชนบท 7-10 ประโยค' },
+    topik1:       { words:['현대사회','스마트폰','영향','긍정적','부정적'], hint:'เขียนเรียงความแสดงความคิดเห็นเกี่ยวกับสมาร์ทโฟน 10+ ประโยค' },
+    topik2:       { words:['세계화','문화','다양성','정체성','보존'], hint:'เขียนเรียงความเชิงวิชาการเกี่ยวกับโลกาภิวัตน์และวัฒนธรรม 15+ ประโยค' },
+  }
+};
+
+// ── STATE ──
+let currentLevel = 'all', currentSearch = '', currentPage = 0;
+const PAGE_SIZE = 20;
+let writeMode = 'sentence', writeLevel = 'beginner';
+let currentTab = 'read';
+let articleReadTimers = {};
+
+// ── TTS ──
+const synth = window.speechSynthesis;
+let currentSpeakBtn = null, koreanVoice = null;
+function loadVoices() {
+  const v = synth.getVoices();
+  koreanVoice = v.find(x => x.lang === 'ko-KR') || v.find(x => x.lang.startsWith('ko')) || null;
+}
+loadVoices();
+if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+
+function speakText(text, btn, rate) {
+  if (!synth) return;
+  synth.cancel();
+  if (currentSpeakBtn && currentSpeakBtn !== btn) {
+    currentSpeakBtn.classList.remove('speaking');
+    currentSpeakBtn.textContent = currentSpeakBtn._orig || '🔊';
+  }
+  if (btn.classList.contains('speaking')) {
+    btn.classList.remove('speaking'); btn.textContent = btn._orig || '🔊';
+    currentSpeakBtn = null; return;
+  }
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'ko-KR'; if (koreanVoice) utt.voice = koreanVoice; utt.rate = rate || 0.8;
+  btn._orig = btn.textContent;
+  btn.classList.add('speaking');
+  if (btn.dataset.type === 'card') btn.innerHTML = '⏹ หยุด';
+  else if (btn.dataset.type === 'modal') btn.textContent = '⏹ หยุด';
+  else btn.textContent = '⏹';
+  currentSpeakBtn = btn;
+  utt.onend = () => {
+    btn.classList.remove('speaking');
+    if (btn.dataset.type === 'card') btn.innerHTML = '🔊 ฟัง';
+    else if (btn.dataset.type === 'modal') btn.textContent = '🔊 ฟังเรื่อง';
+    else btn.textContent = '🔊';
+    currentSpeakBtn = null;
+  };
+  utt.onerror = utt.onend;
+  synth.speak(utt);
+}
+
+function modalSpeak() {
+  const btn = document.getElementById('m-speak-btn');
+  const text = document.getElementById('m-text').textContent;
+  const rate = parseFloat(document.getElementById('m-speed').value);
+  speakText(text, btn, rate);
+}
+
+// ── FILTER ──
+function getFiltered() {
+  return ALL_ARTICLES.filter(a => {
+    const ml = currentLevel === 'all' || a.level === currentLevel;
+    const q = currentSearch.toLowerCase();
+    const ms = !q || a.titleKr.includes(q) || a.titleTh.includes(q) || a.vocab.some(v => v.kr.includes(q) || v.th.includes(q));
+    return ml && ms;
+  });
+}
+
+// ── RENDER GRID ──
+function render() {
+  const filtered = getFiltered();
+  const grid = document.getElementById('grid');
+  const total = filtered.length;
+  const slice = filtered.slice(0, (currentPage + 1) * PAGE_SIZE);
+  grid.innerHTML = '';
+  if (!slice.length) { grid.innerHTML = '<div class="empty-msg">ไม่พบบทความที่ต้องการ 🔍</div>'; }
+  else {
+    slice.forEach((a, idx) => {
+      const lv = LEVELS[a.level];
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.style.animationDelay = (idx % PAGE_SIZE * 0.03) + 's';
+      div.innerHTML = `
+        <div class="card-img ${lv.soft}">
+          <span style="font-size:56px">${a.emoji}</span>
+          <span class="card-img-num">#${a.id}</span>
+          <span class="level-badge ${lv.badge}">${lv.label}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-kr">${a.titleKr}</div>
+          <div class="card-title-th">${a.titleTh}</div>
+          <div class="card-vocab-preview">${a.vocab.map(v => `<span class="vocab-chip">${v.kr}</span>`).join('')}</div>
+          <div class="card-actions">
+            <span style="font-size:10px;color:var(--muted)">${lv.desc} · ${a.vocab.length} คำ</span>
+            <button class="speak-btn" data-type="card" onclick="event.stopPropagation();speakText('${a.titleKr.replace(/'/g,"\\'")}',this,0.8)">🔊 ฟัง</button>
+          </div>
+        </div>`;
+      div.onclick = () => openModal(a);
+      grid.appendChild(div);
+    });
+  }
+  document.getElementById('page-count').textContent = `แสดง ${Math.min(slice.length, total)} / ${total} บทความ`;
+  document.getElementById('load-more').style.display = slice.length < total ? 'block' : 'none';
+}
+
+// ── MODAL ──
+function openModal(a) {
+  const lv = LEVELS[a.level];
+  synth && synth.cancel();
+  if (currentSpeakBtn) { currentSpeakBtn.classList.remove('speaking'); currentSpeakBtn = null; }
+  const imgEl = document.getElementById('m-img');
+  imgEl.className = `modal-header-img ${lv.soft}`;
+  imgEl.innerHTML = `<span style="font-size:72px">${a.emoji}</span><button class="modal-close" onclick="closeModal()">✕</button>`;
+  document.getElementById('m-badge').className = `modal-level-badge ${lv.badge}`;
+  document.getElementById('m-badge').textContent = lv.label;
+  document.getElementById('m-title-kr').textContent = a.titleKr;
+  document.getElementById('m-title-th').textContent = a.titleTh;
+  document.getElementById('m-text').textContent = a.story;
+  document.getElementById('m-text-th').textContent = a.storyTh;
+  const btn = document.getElementById('m-speak-btn');
+  btn.className = 'modal-speak-btn'; btn.textContent = '🔊 ฟังเรื่อง'; btn._orig = '🔊 ฟังเรื่อง'; btn.dataset.type = 'modal';
+  document.getElementById('m-vocab').innerHTML = a.vocab.map(v => `
+    <div class="vocab-card">
+      <button class="vocab-speak-btn" data-type="vocab" onclick="speakText('${v.kr.replace(/'/g,"\\'")}',this,0.7)">🔊</button>
+      <div class="vocab-kr">${v.kr}</div><div class="vocab-roman">${v.rom}</div><div class="vocab-th">${v.th}</div>
+    </div>`).join('');
+  document.getElementById('modal').classList.add('open');
+
+  // Track: if user stays 10+ seconds, count as "read"
+  const key = `article_${a.id}`;
+  if (!articleReadTimers[key]) {
+    articleReadTimers[key] = setTimeout(() => {
+      window._trackArticleRead && window._trackArticleRead();
+    }, 10000);
+  }
+}
+
+function closeModal() {
+  synth && synth.cancel();
+  if (currentSpeakBtn) { currentSpeakBtn.classList.remove('speaking'); currentSpeakBtn = null; }
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'read')));
+  document.getElementById('read-panel').classList.toggle('hidden', tab !== 'read');
+  document.getElementById('write-panel').classList.toggle('active', tab === 'write');
+}
+
+// ── WRITE MODE ──
+function setWriteMode(mode) {
+  writeMode = mode;
+  document.querySelectorAll('.write-mode-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  updatePrompt();
+}
+
+function setWriteLevel(level) {
+  writeLevel = level;
+  document.querySelectorAll('[data-wlevel]').forEach(b => b.classList.toggle('active', b.dataset.wlevel === level));
+  updatePrompt();
+}
+
+function updatePrompt() {
+  const p = WRITE_PROMPTS[writeMode][writeLevel];
+  document.getElementById('prompt-words').innerHTML = p.words.map(w => `<span class="prompt-word">${w}</span>`).join('');
+  document.getElementById('prompt-hint').textContent = '💡 ' + p.hint;
+}
+
+// ── SUBMIT WRITE ──
+async function submitWrite() {
+  const text  = document.getElementById('write-area').value.trim();
+  const name  = document.getElementById('u-name').value.trim();
+  const age   = document.getElementById('u-age').value.trim();
+  const email = document.getElementById('u-email').value.trim();
+
+  if (!text)  { alert('กรุณาเขียนภาษาเกาหลีก่อนค่ะ'); return; }
+  if (!name)  { alert('กรุณาใส่ชื่อเล่นค่ะ'); return; }
+  if (!email) { alert('กรุณาใส่ Email เพื่อรับผลตรวจค่ะ'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>กำลังส่งงาน...';
+
+  const p = WRITE_PROMPTS[writeMode][writeLevel];
+
+  // Send to Google Sheets
+  try {
+    if (APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL') {
+      const payload = {
+        timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
+        name, age, email,
+        level: LEVELS[writeLevel].label,
+        mode: writeMode === 'sentence' ? 'เขียนประโยค' : 'เขียนเรียงความ',
+        words: p.words.join(', '),
+        writing: text
+      };
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+  } catch(e) { console.warn('Sheets log failed:', e); }
+
+  // Show success message
+  const emailDisplay = email || '(ไม่ได้ระบุ email)';
+  document.getElementById('ai-feedback-body').innerHTML =
+    `<div style="font-size:15px;line-height:2">
+      <b>ชื่อ:</b> ${name}<br>
+      <b>ระดับ:</b> ${LEVELS[writeLevel].label}<br>
+      <b>โหมด:</b> ${writeMode === 'sentence' ? 'เขียนประโยค' : 'เขียนเรียงความ'}<br>
+      <b>คำที่ใช้:</b> ${p.words.join(', ')}<br><br>
+      <div style="background:#fff3f0;border-radius:12px;padding:12px 16px;border:1.5px solid #ffd0c8;font-size:14px">
+        📬 ครูจะตรวจและส่งผลกลับไปที่<br>
+        <b style="color:#e06030">${emailDisplay}</b><br>
+        ภายใน <b>24 ชั่วโมง</b> นะคะ 🌸
+      </div>
+    </div>`;
+  document.getElementById('ai-feedback').classList.add('show');
+  document.getElementById('ai-feedback').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Reset form
+  btn.disabled = false;
+  btn.innerHTML = '📨 ส่งงานให้ครูตรวจ';
+  document.getElementById('write-area').value = '';
+  document.getElementById('char-count').textContent = '0';
+}
+
+// ── LEVEL BTNS (read) ──
+document.querySelectorAll('.lvl-btn[data-level]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lvl-btn[data-level]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLevel = btn.dataset.level;
+    currentPage = 0;
+    render();
+  });
+});
+
+// ── LEVEL BTNS (write) ──
+document.querySelectorAll('.lvl-btn[data-wlevel]').forEach(btn => {
+  btn.addEventListener('click', () => setWriteLevel(btn.dataset.wlevel));
+});
+
+document.getElementById('search').addEventListener('input', e => { currentSearch = e.target.value; currentPage = 0; render(); });
+document.getElementById('load-more').addEventListener('click', () => { currentPage++; render(); });
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+document.getElementById('write-area').addEventListener('input', e => { document.getElementById('char-count').textContent = e.target.value.length; });
+
+// ── WEATHER (Seoul OpenWeatherMap — free API) ──
+async function fetchSeoulWeather() {
+  try {
+    // OpenWeatherMap free key — สมัครที่ openweathermap.org เพื่อรับ key จริง
+    const res = await fetch('https://api.openweathermap.org/data/2.5/weather?q=Seoul&appid=6ab43d24c10d9398a8df0d0f93ba989f&units=metric');
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    const main = d.weather[0].main.toLowerCase();
+    const temp = Math.round(d.main.temp);
+    const desc = d.weather[0].description;
+    let emoji = '🌤', label = '';
+    if (main.includes('snow'))  { emoji = '❄️'; label = `หิมะตกที่โซล ${temp}°C`; startSnow(); }
+    else if (main.includes('rain') || main.includes('drizzle')) { emoji = '🌧'; label = `ฝนตกที่โซล ${temp}°C`; startRain(); }
+    else if (main.includes('thunder')) { emoji = '⛈'; label = `พายุที่โซล ${temp}°C`; startRain(true); }
+    else if (main.includes('cloud')) { emoji = '☁️'; label = `มีเมฆที่โซล ${temp}°C`; }
+    else if (main.includes('clear')) {
+      emoji = '☀️'; label = `แดดจ้าที่โซล ${temp}°C`;
+      if (temp > 25) startSunshine();
+    }
+    else { label = `${desc} ${temp}°C ที่โซล`; }
+    document.getElementById('weather-badge').textContent = `${emoji} ${label}`;
+  } catch(e) {
+    // Fallback: simulate Seoul December weather (likely snow/cold)
+    const month = new Date().getMonth();
+    if (month >= 11 || month <= 1) { startSnow(); document.getElementById('weather-badge').textContent = '❄️ จำลองอากาศโซล — หิมะตก'; }
+    else if (month >= 6 && month <= 8) { document.getElementById('weather-badge').textContent = '☀️ จำลองอากาศโซล — ร้อนชื้น'; startSunshine(); }
+    else { document.getElementById('weather-badge').textContent = '🌤 อากาศโซลวันนี้'; }
+  }
+}
+
+// ── WEATHER EFFECTS ──
+const canvas = document.getElementById('weather-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [], animId = null;
+
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+function clearWeather() { if (animId) cancelAnimationFrame(animId); particles = []; ctx.clearRect(0,0,canvas.width,canvas.height); }
+
+function startSnow() {
+  clearWeather();
+  for (let i = 0; i < 80; i++) particles.push({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    r: Math.random()*3+1, speed: Math.random()*0.8+0.3,
+    drift: (Math.random()-0.5)*0.4, opacity: Math.random()*0.5+0.15
+  });
+  function loop() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(200,220,255,${p.opacity})`; ctx.fill();
+      p.y += p.speed; p.x += p.drift;
+      if (p.y > canvas.height) { p.y = -5; p.x = Math.random()*canvas.width; }
+      if (p.x > canvas.width) p.x = 0;
+      if (p.x < 0) p.x = canvas.width;
+    });
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function startRain(heavy) {
+  clearWeather();
+  const count = heavy ? 150 : 100;
+  for (let i = 0; i < count; i++) particles.push({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    speed: Math.random()*6+4, len: Math.random()*14+6, opacity: Math.random()*0.2+0.07
+  });
+  function loop() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-2, p.y+p.len);
+      ctx.strokeStyle = `rgba(150,190,255,${p.opacity})`; ctx.lineWidth=1; ctx.stroke();
+      p.y += p.speed; p.x -= 1.5;
+      if (p.y > canvas.height) { p.y = -10; p.x = Math.random()*canvas.width; }
+      if (p.x < 0) p.x = canvas.width;
+    });
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function startSunshine() {
+  clearWeather();
+  let frame = 0;
+  function loop() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const x = canvas.width - 60, y = 60, maxR = 200;
+    const alpha = 0.04 + 0.01*Math.sin(frame*0.02);
+    for (let r = maxR; r > 20; r -= 18) {
+      const g = ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,`rgba(255,230,80,${alpha})`);
+      g.addColorStop(1,'rgba(255,200,50,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+    frame++; animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ── INIT ──
+updatePrompt();
+render();
+fetchSeoulWeather();
+
+// Init snow immediately (Seoul is cold in March)
+startSnow();
+</script>
+
+</body>
+</html>
