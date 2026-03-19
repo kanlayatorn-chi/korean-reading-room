@@ -145,7 +145,154 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
 
 /* ── STATS BAR ── */
 .stats-bar { display:flex; justify-content:center; gap:10px; margin:16px 0; flex-wrap:wrap; }
-.stat-pill { display:flex; align-items:center; gap:6px; padding:7px 16px; border-radius:100px; font-size:13px; font-weight:700; }
+.stat-pill { 
+  display:flex; 
+  align-items:center; 
+  gap:3px;           /* ลดระยะห่าง emoji ↔ ข้อความ */
+  padding:6px 12px;  /* ลดช่องว่างซ้ายขวา */
+  border-radius:100px; 
+  font-size:13px; 
+  font-weight:700; 
+}
+
+.level-section {
+  text-align: center;
+  margin: 8px 0 18px;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.level-btns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.level-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lvl-btn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 3px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.lvl-btn:hover {
+  transform: translateY(-1px);
+}
+
+.lvl-btn .lvl-sub {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.lvl-btn.active {
+  background: #fff7f3;
+  border-color: #ffb199;
+  color: #e06030;
+  box-shadow: 0 4px 10px rgba(255, 160, 130, 0.12);
+}
+
+.lvl-btn[data-level="all"],
+.lvl-btn[data-llevel="all"] {
+  border-color: #9b6b5f;
+  color: #7a5348;
+}
+
+.lvl-btn[data-level="all"].active,
+.lvl-btn[data-llevel="all"].active {
+  background: #9b6b5f;
+  border-color: #9b6b5f;
+  color: #fff;
+}
+
+.lvl-btn[data-level="beginner"],
+.lvl-btn[data-llevel="beginner"] {
+  border-color: #27ae74;
+  color: #1c8c5c;
+}
+
+.lvl-btn[data-level="beginner"].active,
+.lvl-btn[data-llevel="beginner"].active {
+  background: #27ae74;
+  border-color: #27ae74;
+  color: #fff;
+}
+
+.lvl-btn[data-level="elementary"],
+.lvl-btn[data-llevel="elementary"] {
+  border-color: #3b82f6;
+  color: #2563c9;
+}
+
+.lvl-btn[data-level="elementary"].active,
+.lvl-btn[data-llevel="elementary"].active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.lvl-btn[data-level="intermediate"],
+.lvl-btn[data-llevel="intermediate"] {
+  border-color: #d18b00;
+  color: #9a6500;
+}
+
+.lvl-btn[data-level="intermediate"].active,
+.lvl-btn[data-llevel="intermediate"].active {
+  background: #d18b00;
+  border-color: #d18b00;
+  color: #fff;
+}
+
+.lvl-btn[data-level="topik1"],
+.lvl-btn[data-llevel="topik1"] {
+  border-color: #e35d2f;
+  color: #bf4317;
+}
+
+.lvl-btn[data-level="topik1"].active,
+.lvl-btn[data-llevel="topik1"].active {
+  background: #e35d2f;
+  border-color: #e35d2f;
+  color: #fff;
+}
+
+.lvl-btn[data-level="topik2"],
+.lvl-btn[data-llevel="topik2"] {
+  border-color: #6f52d9;
+  color: #5a3fc1;
+}
+
+.lvl-btn[data-level="topik2"].active,
+.lvl-btn[data-llevel="topik2"].active {
+  background: #6f52d9;
+  border-color: #6f52d9;
+  color: #fff;
+}
+  
 .stat-pill.online  { background:#e8fdf4; color:#1a8a60; border:1.5px solid #9de8d0; }
 .stat-pill.total   { background:#fef3f0; color:#c44a2a; border:1.5px solid #ffb3a0; }
 .stat-pill.read    { background:#f3f0fe; color:#6d48c7; border:1.5px solid #c4b5fd; }
@@ -159,28 +306,77 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
 .tab-btn.active { background:var(--peach2); border-color:var(--peach2); color:white; }
 
 /* ── LEVEL SECTION ── */
-.level-section { margin:0 0 16px; }
-.section-label { font-size:12px; font-weight:700; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; text-align:center; }
-.level-btns { display:flex; flex-direction:column; align-items:center; gap:8px; }
-.level-row { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.lvl-btn[data-level="all"],
+.lvl-btn[data-llevel="all"] {
+  border-color: #9b6b5f;
+  color: #7a5348;
+}
+.lvl-btn[data-level="all"].active,
+.lvl-btn[data-llevel="all"].active {
+  background: #9b6b5f;
+  border-color: #9b6b5f;
+  color: #fff;
+}
 
-.lvl-btn { padding:7px 16px; border-radius:100px; border:2px solid transparent; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.18s; font-family:'Nunito',sans-serif; display:flex; align-items:center; gap:4px; background:white; line-height:1.3; }
-.lvl-btn:hover { transform:translateY(-2px); }
+.lvl-btn[data-level="beginner"],
+.lvl-btn[data-llevel="beginner"] {
+  border-color: #27ae74;
+  color: #1c8c5c;
+}
+.lvl-btn[data-level="beginner"].active,
+.lvl-btn[data-llevel="beginner"].active {
+  background: #27ae74;
+  border-color: #27ae74;
+  color: #fff;
+}
 
-.lvl-btn[data-level="all"]          { border-color:#c4a89a; color:#7a5a50; }
-.lvl-btn[data-level="all"].active   { background:#8a6058; border-color:#8a6058; color:#fff; }
-.lvl-btn[data-level="beginner"]     { border-color:#2aaa7a; color:#1a7a5a; }
-.lvl-btn[data-level="beginner"].active { background:#2aaa7a; border-color:#2aaa7a; color:#fff; }
-.lvl-btn[data-level="elementary"]   { border-color:#3a8ee0; color:#1a5090; }
-.lvl-btn[data-level="elementary"].active { background:#3a8ee0; border-color:#3a8ee0; color:#fff; }
-.lvl-btn[data-level="intermediate"] { border-color:#d09000; color:#7a5000; }
-.lvl-btn[data-level="intermediate"].active { background:#d09000; border-color:#d09000; color:#fff; }
-.lvl-btn[data-level="topik1"]       { border-color:#e06030; color:#b03010; }
-.lvl-btn[data-level="topik1"].active { background:#e06030; border-color:#e06030; color:#fff; }
-.lvl-btn[data-level="topik2"]       { border-color:#7050c0; color:#5030a0; }
-.lvl-btn[data-level="topik2"].active { background:#7050c0; border-color:#7050c0; color:#fff; }
+.lvl-btn[data-level="elementary"],
+.lvl-btn[data-llevel="elementary"] {
+  border-color: #3b82f6;
+  color: #2563c9;
+}
+.lvl-btn[data-level="elementary"].active,
+.lvl-btn[data-llevel="elementary"].active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
 
-.lvl-sub { font-size:10px; opacity:0.75; font-weight:600; }
+.lvl-btn[data-level="intermediate"],
+.lvl-btn[data-llevel="intermediate"] {
+  border-color: #d18b00;
+  color: #9a6500;
+}
+.lvl-btn[data-level="intermediate"].active,
+.lvl-btn[data-llevel="intermediate"].active {
+  background: #d18b00;
+  border-color: #d18b00;
+  color: #fff;
+}
+
+.lvl-btn[data-level="topik1"],
+.lvl-btn[data-llevel="topik1"] {
+  border-color: #e35d2f;
+  color: #bf4317;
+}
+.lvl-btn[data-level="topik1"].active,
+.lvl-btn[data-llevel="topik1"].active {
+  background: #e35d2f;
+  border-color: #e35d2f;
+  color: #fff;
+}
+
+.lvl-btn[data-level="topik2"],
+.lvl-btn[data-llevel="topik2"] {
+  border-color: #6f52d9;
+  color: #5a3fc1;
+}
+.lvl-btn[data-level="topik2"].active,
+.lvl-btn[data-llevel="topik2"].active {
+  background: #6f52d9;
+  border-color: #6f52d9;
+  color: #fff;
+}
 
 /* ── SEARCH ── */
 .search-wrap { display:flex; justify-content:center; margin:0 0 20px; }
@@ -555,26 +751,27 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   <div class="footer-kr" style="margin-top:32px">한국어 공부 화이팅! 🌸</div>
 </div>
 
-  <div id="longread-panel" style="display:none;">
+<div id="longread-panel" style="display:none;">
   <div class="level-section">
     <div class="section-label">เลือกระดับเรื่องยาว</div>
     <div class="level-btns">
       <div class="level-row">
+        <button class="lvl-btn active" data-llevel="all">🌈 ทั้งหมด</button>
         <button class="lvl-btn" data-llevel="beginner">
-  🌱 Beginner <span class="lvl-sub">1A</span>
-</button>
-<button class="lvl-btn" data-llevel="elementary">
-  🌿 Elementary <span class="lvl-sub">1B–2A</span>
-</button>
-<button class="lvl-btn" data-llevel="intermediate">
-  🌻 Intermediate <span class="lvl-sub">2B–3A</span>
-</button>
-<button class="lvl-btn" data-llevel="topik1">
-  🌺 TOPIK I <span class="lvl-sub">Level 1–2</span>
-</button>
-<button class="lvl-btn" data-llevel="topik2">
-  💎 TOPIK II <span class="lvl-sub">Level 3–6</span>
-</button>
+          🌱 Beginner <span class="lvl-sub">1A</span>
+        </button>
+        <button class="lvl-btn" data-llevel="elementary">
+          🌿 Elementary <span class="lvl-sub">1B–2A</span>
+        </button>
+        <button class="lvl-btn" data-llevel="intermediate">
+          🌻 Intermediate <span class="lvl-sub">2B–3A</span>
+        </button>
+        <button class="lvl-btn" data-llevel="topik1">
+          🌺 TOPIK I <span class="lvl-sub">Level 1–2</span>
+        </button>
+        <button class="lvl-btn" data-llevel="topik2">
+          💎 TOPIK II <span class="lvl-sub">Level 3–6</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2173,41 +2370,69 @@ function updatePrompt() {
 }
 
 // ── SUBMIT WRITE ──
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, s => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[s]));
+}
+
 async function submitWrite() {
   const text  = document.getElementById('write-area').value.trim();
   const name  = document.getElementById('u-name').value.trim();
   const age   = document.getElementById('u-age').value.trim();
   const email = document.getElementById('u-email').value.trim();
-
   if (!text)  { alert('กรุณาเขียนภาษาเกาหลีก่อนค่ะ'); return; }
   if (!name)  { alert('กรุณาใส่ชื่อเล่นค่ะ'); return; }
   if (!email) { alert('กรุณาใส่ Email เพื่อรับผลตรวจค่ะ'); return; }
-
   const btn = document.getElementById('submit-btn');
+  const feedback = document.getElementById('ai-feedback');
+  const feedbackBody = document.getElementById('ai-feedback-body');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>กำลังส่งงาน...';
-
+  feedback.classList.remove('show');
   const p = WRITE_PROMPTS[writeMode][writeLevel];
-
-  // Send to Google Sheets
+  const payload = {
+    timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
+    name, age, email,
+    level: LEVELS[writeLevel].label,
+    mode: writeMode === 'sentence' ? 'เขียนประโยค' : 'เขียนเรียงความ',
+    words: p.words.join(', '),
+    writing: text
+  };
+  let sentOk = false;
   try {
-    if (APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL') {
-      const payload = {
-        timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
-        name, age, email,
-        level: LEVELS[writeLevel].label,
-        mode: writeMode === 'sentence' ? 'เขียนประโยค' : 'เขียนเรียงความ',
-        words: p.words.join(', '),
-        writing: text
-      };
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    }
-  } catch(e) { console.warn('Sheets log failed:', e); }
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    sentOk = true;
+  } catch (e) { console.warn('Sheets log failed:', e); }
+  const safeName  = escapeHtml(name);
+  const safeEmail = escapeHtml(email || '(ไม่ได้ระบุ email)');
+  const safeWords = p.words.map(escapeHtml).join(', ');
+  const safeLevel = escapeHtml(LEVELS[writeLevel].label);
+  const safeMode  = escapeHtml(writeMode === 'sentence' ? 'เขียนประโยค' : 'เขียนเรียงความ');
+  feedbackBody.innerHTML = `
+    <div style="font-size:15px;line-height:2">
+      <b>ชื่อ:</b> ${safeName}<br>
+      <b>ระดับ:</b> ${safeLevel}<br>
+      <b>โหมด:</b> ${safeMode}<br>
+      <b>คำที่ใช้:</b> ${safeWords}<br><br>
+      <div style="background:#fff3f0;border-radius:12px;padding:12px 16px;border:1.5px solid #ffd0c8;font-size:14px">
+        ${sentOk ? '✅ ระบบรับงานเรียบร้อยแล้ว' : '⚠️ ส่งคำขอแล้ว แต่ยังยืนยันผลจากปลายทางไม่ได้'}<br>
+        📬 ครูจะตรวจและส่งผลกลับไปที่<br>
+        <b style="color:#e06030">${safeEmail}</b><br>
+        ภายใน <b>24 ชั่วโมง</b> นะคะ 🌸
+      </div>
+    </div>`;
+  feedback.classList.add('show');
+  feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  btn.disabled = false;
+  btn.innerHTML = '📨 ส่งงานให้ครูตรวจ';
+  document.getElementById('write-area').value = '';
+  document.getElementById('char-count').textContent = '0';
+}
 
   // Show success message
   const emailDisplay = email || '(ไม่ได้ระบุ email)';
@@ -2252,7 +2477,7 @@ document.querySelectorAll('.lvl-btn[data-wlevel]').forEach(btn => {
 // ── CATEGORY BTNS ──
 document.querySelectorAll('.category-btn[data-category]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.category-btn[data-category]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentCategory = btn.dataset.category;
     currentPage = 0;
