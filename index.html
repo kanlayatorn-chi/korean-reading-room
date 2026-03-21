@@ -93,8 +93,31 @@
   function setAdminVisible(show) {
     const adminPanel = document.getElementById("admin-panel");
     const adminTabBtn = document.getElementById("admin-tab-btn");
+    const adminShortcutBtn = document.getElementById("admin-shortcut-btn");
     if (adminPanel) adminPanel.style.display = show ? "block" : "none";
     if (adminTabBtn) adminTabBtn.style.display = show ? "inline-flex" : "none";
+    if (adminShortcutBtn) adminShortcutBtn.style.display = show ? "inline-flex" : "none";
+  }
+
+  function startLiveDateTime() {
+    const dtEl = document.getElementById("live-datetime");
+    const tzEl = document.getElementById("live-timezone");
+    if (!dtEl || !tzEl) return;
+
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local Time";
+
+    function renderNow() {
+      const now = new Date();
+      dtEl.textContent = now.toLocaleString("th-TH", {
+        dateStyle: "full",
+        timeStyle: "medium"
+      });
+      tzEl.textContent = `โซนเวลา: ${tz}`;
+    }
+
+    renderNow();
+    if (window._liveDateTimeTimer) clearInterval(window._liveDateTimeTimer);
+    window._liveDateTimeTimer = setInterval(renderNow, 1000);
   }
 
   function fillUserBar(user) {
@@ -296,6 +319,7 @@
 
       fillUserBar(user);
       setAdminVisible(window._isAdmin);
+      startLiveDateTime();
 
       try {
         await saveUserProfile(user);
@@ -322,6 +346,7 @@
       if (appEl) appEl.style.display = "none";
       if (canvas) canvas.style.display = "none";
       setAdminVisible(false);
+      startLiveDateTime();
 
       if (btn) {
         btn.disabled = false;
@@ -397,6 +422,32 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   font-family: 'Nunito', sans-serif; color: var(--muted); cursor: pointer; transition: all 0.18s;
 }
 .signout-btn:hover { border-color: #ffb3a0; color: var(--peach2); }
+.user-bar-btn {
+  padding: 5px 14px; border-radius: 100px; border: 1.5px solid #ffd0c8;
+  background: #fff3f0; font-size: 12px; font-weight: 800;
+  font-family: 'Nunito', sans-serif; color: #c04020; cursor: pointer; transition: all 0.18s;
+  display:none;
+}
+.user-bar-btn:hover { background:#ffe5df; border-color:#ffb3a0; }
+#user-actions { display:flex; align-items:center; gap:10px; }
+
+/* ── LIVE DATETIME FOOTER ── */
+.live-datetime-footer {
+  margin: 28px auto 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.82);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  backdrop-filter: blur(6px);
+}
+#live-datetime { color: var(--text); font-weight: 800; }
+#live-timezone { font-size: 12px; color: #b08070; margin-top: 3px; }
 /* ── WEATHER CANVAS ── */
 #weather-canvas {
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
@@ -726,7 +777,10 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   <div id="user-bar" style="display:flex">
     <img id="user-avatar" alt="avatar">
     <span id="user-name"></span>
-    <button class="signout-btn" onclick="window._signOut()">ออกจากระบบ</button>
+    <div id="user-actions">
+      <button class="user-bar-btn" id="admin-shortcut-btn" onclick="switchTab('admin')">👩‍🏫 Admin</button>
+      <button class="signout-btn" onclick="window._signOut()">ออกจากระบบ</button>
+    </div>
   </div>
 
   <!-- HEADER -->
@@ -753,7 +807,6 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
     <button class="tab-btn active" onclick="switchTab('read')">📚 อ่านเรื่องสั้น</button>
     <button class="tab-btn" onclick="switchTab('longread')">📖 อ่านเรื่องยาว</button>
     <button class="tab-btn" onclick="switchTab('write')">✍️ เขียนฝึกภาษา</button>
-    <button class="tab-btn" id="admin-tab-btn" onclick="switchTab('admin')" style="display:none">👩‍🏫 Admin</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════
@@ -917,6 +970,11 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
         <div id="admin-user-list"></div>
       </div>
     </div>
+  </div>
+
+  <div class="live-datetime-footer" id="live-datetime-footer">
+    <div id="live-datetime">กำลังโหลดวันเวลา...</div>
+    <div id="live-timezone"></div>
   </div>
 
 </div><!-- /#app -->
@@ -1414,6 +1472,7 @@ function switchTab(tab) {
   const longreadPanel = document.getElementById('longread-panel');
   const writePanel = document.getElementById('write-panel');
   const adminPanel = document.getElementById('admin-panel');
+  const adminShortcutBtn = document.getElementById('admin-shortcut-btn');
 
   if (readPanel) readPanel.style.display = tab === 'read' ? '' : 'none';
   if (longreadPanel) longreadPanel.style.display = tab === 'longread' ? '' : 'none';
@@ -1421,6 +1480,7 @@ function switchTab(tab) {
   if (adminPanel) adminPanel.style.display = (tab === 'admin' && window._isAdmin) ? '' : 'none';
 
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  if (adminShortcutBtn) adminShortcutBtn.classList.toggle('active', tab === 'admin');
 
   const tabButtons = Array.from(document.querySelectorAll('.tabs .tab-btn'));
   tabButtons.forEach(btn => {
