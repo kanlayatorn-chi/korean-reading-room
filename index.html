@@ -33,6 +33,8 @@
     getAuth,
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut,
     onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
@@ -302,6 +304,24 @@
   window._signOut = async () => {
     await signOut(auth);
   };
+
+  getRedirectResult(auth).catch((e) => {
+    console.warn("Redirect result failed:", e.code, e.message);
+
+    if (e.code === "auth/unauthorized-domain") {
+      showLoginError("โดเมนนี้ยังไม่ได้รับอนุญาตใน Firebase Authentication");
+    } else if (e.code === "auth/web-storage-unsupported") {
+      showLoginError("เบราว์เซอร์นี้ไม่รองรับการเข้าสู่ระบบ กรุณาเปิดใน Safari หรือ Chrome ค่ะ");
+    } else if (e.code === "auth/operation-not-supported-in-this-environment") {
+      showLoginError("กรุณาเปิดลิงก์นี้ใน browser ปกติ เช่น Safari หรือ Chrome ค่ะ");
+    } else if (e.code === "auth/argument-error") {
+      showLoginError("การเข้าสู่ระบบบนอุปกรณ์นี้มีปัญหา กรุณาลองเปิดใน Safari หรือ Chrome ค่ะ");
+    } else {
+      showLoginError(`เข้าสู่ระบบไม่สำเร็จ: ${e.code || "unknown-error"}`);
+    }
+
+    resetLoginButton();
+  });
 
   onAuthStateChanged(auth, async (user) => {
     const loginScreen = document.getElementById("login-screen");
