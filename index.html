@@ -61,6 +61,7 @@
   window._db = db;
   window._dbRef = ref;
   window._dbRun = runTransaction;
+  window._dbOnValue = onValue;
 
   function isAdminEmail(user) {
     return !!user?.email && ADMIN_EMAILS.includes(user.email);
@@ -272,6 +273,10 @@
         `).join("");
       }
     });
+
+    if (typeof window.initWritingReviewAdmin === "function") {
+      window.initWritingReviewAdmin();
+    }
   }
 
   window._signIn = async () => {
@@ -732,6 +737,181 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   line-height: 1.7;
 }
 
+/* ── WRITING REVIEW UI ── */
+.admin-review-wrap { margin-top: 24px; }
+.admin-review-header { text-align: center; margin: 10px 0 18px; }
+.admin-review-header h2 { font-size: 28px; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+.admin-review-header p { color: var(--muted); font-size: 14px; }
+
+.review-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.review-stat-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(200,130,120,0.08);
+}
+.review-stat-num { font-size: 28px; font-weight: 900; color: var(--peach2); }
+.review-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+
+.review-search,
+.review-select,
+.review-input,
+.review-textarea {
+  font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+}
+.review-search,
+.review-select,
+.review-input {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+}
+.review-search { flex: 1; min-width: 220px; }
+
+.review-layout { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+.review-list-panel,
+.review-detail-panel {
+  background: rgba(255,255,255,0.7);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  padding: 16px;
+  backdrop-filter: blur(6px);
+}
+.review-list { display: flex; flex-direction: column; gap: 12px; max-height: 900px; overflow-y: auto; padding-right: 4px; }
+.review-item-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.review-item-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(200,130,120,0.12); }
+.review-item-card.active { border-color: var(--peach2); box-shadow: 0 10px 20px rgba(255,140,115,0.16); }
+.review-item-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.review-item-name { font-size: 15px; font-weight: 900; color: var(--text); }
+.review-item-email { font-size: 12px; color: var(--muted); }
+.review-item-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.review-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.review-pill.type { background: #fff3f0; color: #c04020; border: 1px solid #ffd0c8; }
+.review-pill.pending { background: #fff7df; color: #a56a00; border: 1px solid #ffe39f; }
+.review-pill.reviewed { background: #eafaf3; color: #1c8c5c; border: 1px solid #b9ebd1; }
+.review-preview { font-size: 13px; color: #6d5c5c; line-height: 1.6; }
+
+.review-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 16px;
+}
+.student-meta-card,
+.review-block {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.student-meta-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.review-student-name { font-size: 18px; font-weight: 900; color: var(--text); }
+.review-student-email { font-size: 13px; color: var(--muted); }
+.student-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 13px;
+  color: #6f6060;
+}
+.review-block-title { font-size: 14px; font-weight: 900; color: var(--text); margin-bottom: 10px; }
+.review-prompt-box {
+  background: #fff9f5;
+  border: 1.5px dashed #ffd0c8;
+  border-radius: 16px;
+  padding: 14px;
+  color: #6e5a5a;
+  line-height: 1.7;
+}
+.review-student-text {
+  background: #fffdfc;
+  border-left: 4px solid var(--peach);
+  border-radius: 14px;
+  padding: 16px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  line-height: 2;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.rubric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rubric-grid label,
+.review-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #6d5c5c;
+  margin-bottom: 6px;
+}
+.review-textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  background: #fff;
+}
+.review-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.review-save-btn,
+.review-done-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+}
+.review-save-btn { background: linear-gradient(135deg,#ff8c73,#f9638a); color: white; }
+.review-done-btn { background: #eafaf3; color: #1c8c5c; border: 1.5px solid #b9ebd1; }
+
+@media (max-width: 1024px) {
+  .review-layout { grid-template-columns: 1fr; }
+  .review-summary { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .admin-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .review-summary,
+  .rubric-grid,
+  .student-meta-grid { grid-template-columns: 1fr; }
+}
+
 /* ── MISC ── */
 .page-count { text-align:center; font-size:13px; color:var(--muted); margin-top:20px; }
 .load-more-btn { display:block; margin:16px auto 0; padding:10px 34px; border-radius:100px; border:2px solid var(--peach2); background:white; color:var(--peach2); font-size:13px; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer; transition:all 0.18s; }
@@ -988,6 +1168,124 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
       <div class="prompt-card" style="grid-column:1/-1;">
         <div class="prompt-label">รายชื่อผู้ใช้งานทั้งหมด</div>
         <div id="admin-user-list"></div>
+      </div>
+    </div>
+
+    <div id="admin-review-panel" class="admin-review-wrap">
+      <div class="admin-review-header">
+        <h2>✍️ มุมตรวจงานครู</h2>
+        <p>ตรวจประโยคและเรียงความของนักเรียนแบบน่ารัก ๆ ได้ในหน้าเดียว</p>
+      </div>
+
+      <div class="review-summary">
+        <div class="review-stat-card">
+          <div class="review-stat-num" id="pending-count">0</div>
+          <div class="review-stat-label">✍️ งานรอตรวจ</div>
+        </div>
+        <div class="review-stat-card">
+          <div class="review-stat-num" id="reviewed-count">0</div>
+          <div class="review-stat-label">✅ ตรวจแล้ว</div>
+        </div>
+        <div class="review-stat-card">
+          <div class="review-stat-num" id="student-count">0</div>
+          <div class="review-stat-label">👩‍🎓 ผู้ส่งงาน</div>
+        </div>
+        <div class="review-stat-card">
+          <div class="review-stat-num" id="today-count">0</div>
+          <div class="review-stat-label">📅 งานวันนี้</div>
+        </div>
+      </div>
+
+      <div class="review-toolbar">
+        <input id="review-search" class="review-search" placeholder="🔍 ค้นหาชื่อ / email / ข้อความ..." />
+        <select id="review-type-filter" class="review-select">
+          <option value="all">ทั้งหมด</option>
+          <option value="sentence">เขียนประโยค</option>
+          <option value="essay">เขียนเรียงความ</option>
+        </select>
+        <select id="review-status-filter" class="review-select">
+          <option value="all">ทุกสถานะ</option>
+          <option value="pending">รอตรวจ</option>
+          <option value="reviewed">ตรวจแล้ว</option>
+        </select>
+      </div>
+
+      <div class="review-layout">
+        <div class="review-list-panel">
+          <div id="review-list" class="review-list"></div>
+        </div>
+
+        <div class="review-detail-panel">
+          <div id="review-empty" class="review-empty">
+            🌸 เลือกงานจากด้านซ้ายเพื่อเริ่มตรวจค่ะ
+          </div>
+
+          <div id="review-detail" style="display:none;">
+            <div class="student-meta-card">
+              <div class="student-meta-top">
+                <img id="review-student-avatar" class="review-avatar" alt="">
+                <div>
+                  <div id="review-student-name" class="review-student-name"></div>
+                  <div id="review-student-email" class="review-student-email"></div>
+                </div>
+              </div>
+              <div class="student-meta-grid">
+                <div><strong>ประเภท:</strong> <span id="review-type"></span></div>
+                <div><strong>ระดับ:</strong> <span id="review-level"></span></div>
+                <div><strong>ส่งเมื่อ:</strong> <span id="review-created-at"></span></div>
+                <div><strong>สถานะ:</strong> <span id="review-status"></span></div>
+              </div>
+            </div>
+
+            <div class="review-block">
+              <div class="review-block-title">📌 โจทย์</div>
+              <div id="review-prompt" class="review-prompt-box"></div>
+            </div>
+
+            <div class="review-block">
+              <div class="review-block-title">📝 ข้อความนักเรียน</div>
+              <div id="review-student-text" class="review-student-text"></div>
+            </div>
+
+            <div class="review-block">
+              <div class="review-block-title">⭐ ให้คะแนน</div>
+              <div class="rubric-grid">
+                <label>ไวยากรณ์
+                  <input id="score-grammar" type="number" min="1" max="5" class="review-input">
+                </label>
+                <label>คำศัพท์
+                  <input id="score-vocab" type="number" min="1" max="5" class="review-input">
+                </label>
+                <label>ความเป็นธรรมชาติ
+                  <input id="score-natural" type="number" min="1" max="5" class="review-input">
+                </label>
+                <label>ครบตามโจทย์
+                  <input id="score-task" type="number" min="1" max="5" class="review-input">
+                </label>
+              </div>
+            </div>
+
+            <div class="review-block">
+              <div class="review-block-title">💖 Feedback</div>
+              <label class="review-label">จุดที่ทำได้ดี</label>
+              <textarea id="review-good" class="review-textarea" placeholder="เช่น ใช้คำศัพท์ได้ตรงโจทย์มากค่ะ"></textarea>
+
+              <label class="review-label">จุดที่ควรแก้</label>
+              <textarea id="review-improve" class="review-textarea" placeholder="เช่น รูปประโยคลงท้ายยังไม่คงที่"></textarea>
+
+              <label class="review-label">ประโยคตัวอย่างที่แนะนำ</label>
+              <textarea id="review-suggested" class="review-textarea" placeholder="เช่น 저는 친구와 학교에 가서 공부합니다."></textarea>
+
+              <label class="review-label">คอมเมนต์ถึงนักเรียน</label>
+              <textarea id="review-comment" class="review-textarea" placeholder="เขียนกำลังใจให้นักเรียนน่ารัก ๆ ได้ตรงนี้"></textarea>
+            </div>
+
+            <div class="review-actions">
+              <button class="review-save-btn" onclick="saveCurrentReview()">💾 บันทึกผลตรวจ</button>
+              <button class="review-done-btn" onclick="markReviewDone()">✅ ตรวจเสร็จแล้ว</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1561,6 +1859,25 @@ async function submitWrite() {
   feedback.classList.remove('show');
 
   const p = WRITE_PROMPTS[writeMode]?.[writeLevel] || {};
+  const currentUser = window._currentUser || {};
+  const submissionId = `sub_${Date.now()}`;
+  const submissionPayload = {
+    userUid: currentUser.uid || '',
+    studentName: name,
+    studentEmail: email,
+    studentPhotoURL: currentUser.photoURL || '',
+    age,
+    type: writeMode === 'sentence' ? 'sentence' : 'essay',
+    modeLabel: writeMode === 'sentence' ? 'เขียนประโยค' : 'เขียนเรียงความ',
+    level: LEVELS[writeLevel]?.label || writeLevel,
+    prompt: p.hint || (p.words || []).join(', '),
+    words: p.words || [],
+    text,
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+    review: {}
+  };
+
   const payload = {
     timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
     name, age, email,
@@ -1569,6 +1886,14 @@ async function submitWrite() {
     words: (p.words || []).join(', '),
     writing: text
   };
+
+  try {
+    if (window._db && currentUser.uid) {
+      await set(window._dbRef(window._db, `writing_submissions/${currentUser.uid}/${submissionId}`), submissionPayload);
+    }
+  } catch(e) {
+    console.warn('Firebase writing submission failed:', e);
+  }
 
   let sentOk = false;
   try {
@@ -1601,6 +1926,207 @@ async function submitWrite() {
   document.getElementById('write-area').value = '';
   document.getElementById('char-count').textContent = '0';
 }
+
+
+let reviewSubmissions = [];
+let currentReviewItem = null;
+let reviewAdminBound = false;
+
+function flattenSubmissions(data) {
+  const items = [];
+  Object.entries(data || {}).forEach(([uid, submissions]) => {
+    Object.entries(submissions || {}).forEach(([submissionId, item]) => {
+      items.push({
+        uid,
+        submissionId,
+        ...item
+      });
+    });
+  });
+  return items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
+function renderReviewList() {
+  const listEl = document.getElementById('review-list');
+  if (!listEl) return;
+
+  const search = (document.getElementById('review-search')?.value || '').toLowerCase();
+  const type = document.getElementById('review-type-filter')?.value || 'all';
+  const status = document.getElementById('review-status-filter')?.value || 'all';
+
+  const filtered = reviewSubmissions.filter(item => {
+    const textMatch =
+      (item.studentName || '').toLowerCase().includes(search) ||
+      (item.studentEmail || '').toLowerCase().includes(search) ||
+      (item.text || '').toLowerCase().includes(search);
+
+    const typeMatch = type === 'all' || item.type === type;
+    const statusMatch = status === 'all' || (item.status || 'pending') === status;
+
+    return textMatch && typeMatch && statusMatch;
+  });
+
+  const pendingEl = document.getElementById('pending-count');
+  const reviewedEl = document.getElementById('reviewed-count');
+  const studentEl = document.getElementById('student-count');
+  const todayEl = document.getElementById('today-count');
+
+  if (pendingEl) pendingEl.textContent = reviewSubmissions.filter(i => (i.status || 'pending') === 'pending').length;
+  if (reviewedEl) reviewedEl.textContent = reviewSubmissions.filter(i => i.status === 'reviewed').length;
+  if (studentEl) studentEl.textContent = new Set(reviewSubmissions.map(i => i.userUid || i.uid)).size;
+
+  const today = new Date().toDateString();
+  if (todayEl) {
+    todayEl.textContent = reviewSubmissions.filter(i => i.createdAt && new Date(i.createdAt).toDateString() === today).length;
+  }
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="empty-msg">ยังไม่มีงานที่ตรงกับเงื่อนไขค่ะ</div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(item => `
+    <div class="review-item-card ${currentReviewItem && currentReviewItem.uid === item.uid && currentReviewItem.submissionId === item.submissionId ? 'active' : ''}"
+         onclick="openReviewItem('${item.uid}','${item.submissionId}')">
+      <div class="review-item-top">
+        ${item.studentPhotoURL ? `<img class="review-avatar" src="${item.studentPhotoURL}" alt="">` : `<div class="review-avatar admin-avatar-fallback">👩‍🎓</div>`}
+        <div>
+          <div class="review-item-name">${escapeHtml(item.studentName || 'ไม่มีชื่อ')}</div>
+          <div class="review-item-email">${escapeHtml(item.studentEmail || '-')}</div>
+        </div>
+      </div>
+
+      <div class="review-item-meta">
+        <span class="review-pill type">${item.type === 'essay' ? '📄 เรียงความ' : '📝 ประโยค'}</span>
+        <span class="review-pill ${(item.status || 'pending') === 'reviewed' ? 'reviewed' : 'pending'}">
+          ${(item.status || 'pending') === 'reviewed' ? '✅ ตรวจแล้ว' : '✍️ รอตรวจ'}
+        </span>
+      </div>
+
+      <div class="review-preview">${escapeHtml((item.text || '').slice(0, 100))}${(item.text || '').length > 100 ? '...' : ''}</div>
+    </div>
+  `).join('');
+}
+
+function openReviewItem(uid, submissionId) {
+  const item = reviewSubmissions.find(x => x.uid === uid && x.submissionId === submissionId);
+  if (!item) return;
+
+  currentReviewItem = item;
+
+  const emptyEl = document.getElementById('review-empty');
+  const detailEl = document.getElementById('review-detail');
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (detailEl) detailEl.style.display = '';
+
+  const avatarEl = document.getElementById('review-student-avatar');
+  if (avatarEl) {
+    avatarEl.src = item.studentPhotoURL || '';
+    avatarEl.style.visibility = item.studentPhotoURL ? 'visible' : 'hidden';
+  }
+  document.getElementById('review-student-name').textContent = item.studentName || 'ไม่มีชื่อ';
+  document.getElementById('review-student-email').textContent = item.studentEmail || '-';
+  document.getElementById('review-type').textContent = item.type === 'essay' ? 'เขียนเรียงความ' : 'เขียนประโยค';
+  document.getElementById('review-level').textContent = item.level || '-';
+  document.getElementById('review-created-at').textContent = item.createdAt ? new Date(item.createdAt).toLocaleString('th-TH') : '-';
+  document.getElementById('review-status').textContent = item.status === 'reviewed' ? 'ตรวจแล้ว' : 'รอตรวจ';
+  document.getElementById('review-prompt').textContent = item.prompt || '-';
+  document.getElementById('review-student-text').textContent = item.text || '-';
+
+  const review = item.review || {};
+  document.getElementById('score-grammar').value = review.grammar || '';
+  document.getElementById('score-vocab').value = review.vocabulary || '';
+  document.getElementById('score-natural').value = review.naturalness || '';
+  document.getElementById('score-task').value = review.taskCompletion || '';
+  document.getElementById('review-good').value = review.goodPoints || '';
+  document.getElementById('review-improve').value = review.improvements || '';
+  document.getElementById('review-suggested').value = review.suggestedVersion || '';
+  document.getElementById('review-comment').value = review.teacherComment || '';
+
+  renderReviewList();
+}
+
+async function saveCurrentReview() {
+  if (!currentReviewItem || !window._db || !window._dbRef) return;
+
+  const grammar = Number(document.getElementById('score-grammar').value || 0);
+  const vocabulary = Number(document.getElementById('score-vocab').value || 0);
+  const naturalness = Number(document.getElementById('score-natural').value || 0);
+  const taskCompletion = Number(document.getElementById('score-task').value || 0);
+
+  const review = {
+    grammar,
+    vocabulary,
+    naturalness,
+    taskCompletion,
+    overallScore: grammar + vocabulary + naturalness + taskCompletion,
+    goodPoints: document.getElementById('review-good').value.trim(),
+    improvements: document.getElementById('review-improve').value.trim(),
+    suggestedVersion: document.getElementById('review-suggested').value.trim(),
+    teacherComment: document.getElementById('review-comment').value.trim(),
+    reviewedAt: new Date().toISOString(),
+    reviewedBy: window._currentUser?.email || 'admin'
+  };
+
+  await set(window._dbRef(window._db, `writing_submissions/${currentReviewItem.uid}/${currentReviewItem.submissionId}/review`), review);
+
+  const target = reviewSubmissions.find(x => x.uid === currentReviewItem.uid && x.submissionId === currentReviewItem.submissionId);
+  if (target) target.review = review;
+
+  alert('บันทึกผลตรวจเรียบร้อยแล้วค่ะ 🌸');
+  renderReviewList();
+}
+
+async function markReviewDone() {
+  if (!currentReviewItem || !window._db || !window._dbRef) return;
+
+  await saveCurrentReview();
+  await set(window._dbRef(window._db, `writing_submissions/${currentReviewItem.uid}/${currentReviewItem.submissionId}/status`), 'reviewed');
+
+  const target = reviewSubmissions.find(x => x.uid === currentReviewItem.uid && x.submissionId === currentReviewItem.submissionId);
+  if (target) target.status = 'reviewed';
+
+  document.getElementById('review-status').textContent = 'ตรวจแล้ว';
+  alert('ตรวจงานเสร็จแล้ว ✅');
+  renderReviewList();
+}
+
+function bindReviewToolbar() {
+  ['review-search', 'review-type-filter', 'review-status-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.bound === 'yes') return;
+    el.addEventListener('input', renderReviewList);
+    el.addEventListener('change', renderReviewList);
+    el.dataset.bound = 'yes';
+  });
+}
+
+function initWritingReviewAdmin() {
+  if (!window._db || !window._dbRef || reviewAdminBound) {
+    bindReviewToolbar();
+    return;
+  }
+
+  bindReviewToolbar();
+  reviewAdminBound = true;
+
+  window._dbOnValue(window._dbRef(window._db, 'writing_submissions'), (snap) => {
+    reviewSubmissions = flattenSubmissions(snap.val() || {});
+    renderReviewList();
+
+    if (currentReviewItem) {
+      const refreshed = reviewSubmissions.find(x => x.uid === currentReviewItem.uid && x.submissionId === currentReviewItem.submissionId);
+      if (refreshed) {
+        openReviewItem(refreshed.uid, refreshed.submissionId);
+      }
+    }
+  });
+}
+
+window.openReviewItem = openReviewItem;
+window.saveCurrentReview = saveCurrentReview;
+window.markReviewDone = markReviewDone;
+window.initWritingReviewAdmin = initWritingReviewAdmin;
 
 // ============================================================
 // EVENT LISTENERS
