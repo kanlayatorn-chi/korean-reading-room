@@ -195,83 +195,235 @@
     });
   }
 
+  
+  function formatRelativeTime(isoString) {
+    if (!isoString) return "ยังไม่มีข้อมูลเวลา";
+    const diffMs = Date.now() - new Date(isoString).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return "เมื่อสักครู่";
+    if (mins < 60) return `${mins} นาทีที่แล้ว`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} ชั่วโมงที่แล้ว`;
+    const days = Math.floor(hrs / 24);
+    return `${days} วันที่แล้ว`;
+  }
+
+  function formatFullDate(isoString) {
+    if (!isoString) return "-";
+    return new Date(isoString).toLocaleString("th-TH");
+  }
+
+  function isTodayDate(isoString) {
+    if (!isoString) return false;
+    const d = new Date(isoString);
+    const now = new Date();
+    return d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear();
+  }
+
   function loadAdminDashboard() {
     const summaryEl = document.getElementById("admin-summary");
     const usersEl = document.getElementById("admin-user-list");
     const onlineEl = document.getElementById("admin-online-list");
+    const recentEl = document.getElementById("admin-recent-list");
+    const onlineCountEl = document.getElementById("admin-online-count");
+    const activeHintEl = document.getElementById("admin-active-hint");
+    const searchEl = document.getElementById("admin-user-search");
 
-    if (summaryEl) summaryEl.innerHTML = "กำลังโหลด...";
-    if (usersEl) usersEl.innerHTML = "กำลังโหลด...";
-    if (onlineEl) onlineEl.innerHTML = "กำลังโหลด...";
+    let allUsers = [];
+    let onlineUsers = [];
 
-    onValue(ref(db, "users"), (snap) => {
-      const data = snap.val() || {};
-      const users = Object.values(data).sort(
-        (a, b) => new Date(b.lastLogin || 0) - new Date(a.lastLogin || 0)
-      );
+    function renderAdminView() {
+      const q = (searchEl?.value || "").trim().toLowerCase();
+      const filteredUsers = allUsers.filter((u) => {
+        return !q ||
+          (u.displayName || "").toLowerCase().includes(q) ||
+          (u.email || "").toLowerCase().includes(q);
+      });
+
+      const todayLogins = allUsers.filter((u) => isTodayDate(u.lastLogin)).length;
+      const activeWeek = allUsers.filter((u) => {
+        if (!u.lastLogin) return false;
+        return (Date.now() - new Date(u.lastLogin).getTime()) <= 7 * 24 * 60 * 60 * 1000;
+      }).length;
+      const onlineRate = allUsers.length ? Math.round((onlineUsers.length / allUsers.length) * 100) : 0;
 
       if (summaryEl) {
         summaryEl.innerHTML = `
-          <div class="admin-stat-card">
-            <div class="admin-stat-number">${users.length}</div>
-            <div class="admin-stat-label">ผู้ใช้ทั้งหมด</div>
+          <div class="admin-kpi peach">
+            <div class="admin-kpi-top">
+              <div class="admin-kpi-title">students</div>
+              <div class="admin-kpi-icon">👩‍🎓</div>
+            </div>
+            <div class="admin-kpi-number">${allUsers.length}</div>
+            <div class="admin-kpi-sub">ผู้เรียนทั้งหมดในห้องนี้</div>
+            <div class="admin-kpi-foot"><span class="admin-kpi-dot"></span>พร้อมเติบโตไปด้วยกัน</div>
+          </div>
+
+          <div class="admin-kpi mint">
+            <div class="admin-kpi-top">
+              <div class="admin-kpi-title">online now</div>
+              <div class="admin-kpi-icon">🟢</div>
+            </div>
+            <div class="admin-kpi-number">${onlineUsers.length}</div>
+            <div class="admin-kpi-sub">กำลังเรียนอยู่ตอนนี้ · ${onlineRate}% ของผู้ใช้ทั้งหมด</div>
+            <div class="admin-kpi-foot"><span class="admin-kpi-dot" style="background:#20bf7a"></span>Realtime สด ๆ</div>
+          </div>
+
+          <div class="admin-kpi lav">
+            <div class="admin-kpi-top">
+              <div class="admin-kpi-title">today login</div>
+              <div class="admin-kpi-icon">🌤️</div>
+            </div>
+            <div class="admin-kpi-number">${todayLogins}</div>
+            <div class="admin-kpi-sub">เข้าใช้งานภายในวันนี้</div>
+            <div class="admin-kpi-foot"><span class="admin-kpi-dot" style="background:#8f74ea"></span>ชั้นเรียนยังคึกคักอยู่</div>
+          </div>
+
+          <div class="admin-kpi yellow">
+            <div class="admin-kpi-top">
+              <div class="admin-kpi-title">active 7 days</div>
+              <div class="admin-kpi-icon">🔥</div>
+            </div>
+            <div class="admin-kpi-number">${activeWeek}</div>
+            <div class="admin-kpi-sub">กลับมาเรียนภายใน 7 วันล่าสุด</div>
+            <div class="admin-kpi-foot"><span class="admin-kpi-dot" style="background:#f2b22f"></span>นักเรียนขยันน่ารักมาก</div>
           </div>
         `;
       }
 
+      if (onlineCountEl) onlineCountEl.textContent = `${onlineUsers.length} คนออนไลน์`;
+      if (activeHintEl) activeHintEl.textContent = q ? `ผลการค้นหา ${filteredUsers.length} คน` : `มีผู้เรียน active 7 วันล่าสุด ${activeWeek} คน`;
+
+      if (onlineEl) {
+        if (!onlineUsers.length) {
+          onlineEl.innerHTML = `
+            <div class="admin-empty-fancy">
+              <div class="emoji">🌙</div>
+              <div>ตอนนี้ยังไม่มีใครออนไลน์</div>
+              <div style="font-size:12px; margin-top:4px;">เดี๋ยวพอมีนักเรียนเข้ามา ห้องนี้จะคึกคักขึ้นทันทีค่ะ</div>
+            </div>
+          `;
+        } else {
+          onlineEl.innerHTML = `<div class="admin-online-stack">` + onlineUsers.map((u) => `
+            <div class="admin-online-card">
+              <div class="admin-user-main">
+                ${u.photoURL ? `<img class="admin-avatar" src="${u.photoURL}" alt="">` : `<div class="admin-avatar admin-avatar-fallback">🌸</div>`}
+                <div>
+                  <div class="admin-name">${u.displayName || "ไม่มีชื่อ"}</div>
+                  <div class="admin-email">${u.email || "-"}</div>
+                  <div class="admin-meta">
+                    <div class="admin-meta-row">
+                      <span class="admin-tag mint">กำลังออนไลน์</span>
+                      <span class="admin-tag peach">${u.t ? formatFullDate(u.t) : "-"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-status-bubble"><span class="admin-status-dot"></span>Live now</div>
+            </div>
+          `).join("") + `</div>`;
+        }
+      }
+
+      if (recentEl) {
+        const recent = allUsers.slice(0, 5);
+        if (!recent.length) {
+          recentEl.innerHTML = `
+            <div class="admin-empty-fancy">
+              <div class="emoji">🧸</div>
+              <div>ยังไม่มีประวัติการเข้าใช้งาน</div>
+            </div>
+          `;
+        } else {
+          recentEl.innerHTML = `<div class="admin-recent-stack">` + recent.map((u, i) => `
+            <div class="admin-recent-card">
+              <div class="admin-user-top">
+                <div class="admin-user-main">
+                  ${u.photoURL ? `<img class="admin-avatar" src="${u.photoURL}" alt="">` : `<div class="admin-avatar admin-avatar-fallback">${i === 0 ? "👑" : "💖"}</div>`}
+                  <div>
+                    <div class="admin-name">${u.displayName || "ไม่มีชื่อ"}</div>
+                    <div class="admin-email">${u.email || "-"}</div>
+                  </div>
+                </div>
+                <div class="admin-user-right">
+                  <span class="admin-tag lav">${i === 0 ? "ล่าสุด" : "recent"}</span>
+                  <span class="admin-recent-time">${formatRelativeTime(u.lastLogin)}</span>
+                </div>
+              </div>
+              <div class="admin-soft-line"></div>
+              <div class="admin-meta">
+                เข้าระบบล่าสุด: <strong>${formatFullDate(u.lastLogin)}</strong>
+              </div>
+            </div>
+          `).join("") + `</div>`;
+        }
+      }
+
       if (usersEl) {
-        if (!users.length) {
-          usersEl.innerHTML = '<div class="empty-msg">ยังไม่มีผู้ใช้งาน</div>';
+        if (!filteredUsers.length) {
+          usersEl.innerHTML = `
+            <div class="admin-empty-fancy">
+              <div class="emoji">🔎</div>
+              <div>ไม่พบผู้เรียนที่ค้นหา</div>
+              <div style="font-size:12px; margin-top:4px;">ลองพิมพ์ชื่อหรืออีเมลใหม่อีกครั้งนะคะ</div>
+            </div>
+          `;
           return;
         }
 
-        usersEl.innerHTML = users.map((u) => `
-          <div class="admin-user-card">
-            <div class="admin-user-main">
-              ${u.photoURL ? `<img class="admin-avatar" src="${u.photoURL}" alt="">` : `<div class="admin-avatar admin-avatar-fallback">👤</div>`}
-              <div>
-                <div class="admin-name">${u.displayName || "ไม่มีชื่อ"}</div>
-                <div class="admin-email">${u.email || "-"}</div>
+        usersEl.innerHTML = filteredUsers.map((u, index) => {
+          const isOnline = onlineUsers.some((x) => x.uid === u.uid || x.email === u.email);
+          return `
+            <div class="admin-user-card">
+              <div class="admin-user-top">
+                <div class="admin-user-main">
+                  ${u.photoURL ? `<img class="admin-avatar" src="${u.photoURL}" alt="">` : `<div class="admin-avatar admin-avatar-fallback">${index < 3 ? "🌟" : "👤"}</div>`}
+                  <div>
+                    <div class="admin-name">${u.displayName || "ไม่มีชื่อ"}</div>
+                    <div class="admin-email">${u.email || "-"}</div>
+                  </div>
+                </div>
+                <div class="admin-user-right">
+                  <span class="admin-tag ${isOnline ? "mint" : "peach"}">${isOnline ? "ออนไลน์อยู่" : "offline"}</span>
+                  ${isTodayDate(u.lastLogin) ? `<span class="admin-tag lav">today</span>` : ``}
+                </div>
+              </div>
+
+              <div class="admin-user-bottom">
+                <div class="admin-meta">
+                  <div><strong>UID:</strong> ${u.uid || "-"}</div>
+                  <div><strong>เข้าใช้ล่าสุด:</strong> ${formatFullDate(u.lastLogin)}</div>
+                  <div><strong>ผ่านมาแล้ว:</strong> ${formatRelativeTime(u.lastLogin)}</div>
+                </div>
               </div>
             </div>
-            <div class="admin-meta">
-              <div><strong>UID:</strong> ${u.uid || "-"}</div>
-              <div><strong>เข้าใช้ล่าสุด:</strong> ${u.lastLogin ? new Date(u.lastLogin).toLocaleString("th-TH") : "-"}</div>
-            </div>
-          </div>
-        `).join("");
+          `;
+        }).join("");
       }
+    }
+
+    if (searchEl && !searchEl.dataset.bound) {
+      searchEl.addEventListener("input", renderAdminView);
+      searchEl.dataset.bound = "true";
+    }
+
+    if (summaryEl) summaryEl.innerHTML = `<div class="admin-kpi loading">กำลังโหลด dashboard...</div>`;
+    if (usersEl) usersEl.innerHTML = `<div class="admin-empty-fancy"><div class="emoji">🌸</div><div>กำลังโหลดรายชื่อผู้ใช้งาน...</div></div>`;
+    if (onlineEl) onlineEl.innerHTML = `<div class="admin-empty-fancy"><div class="emoji">🫧</div><div>กำลังโหลดสถานะออนไลน์...</div></div>`;
+    if (recentEl) recentEl.innerHTML = `<div class="admin-empty-fancy"><div class="emoji">⏳</div><div>กำลังโหลดกิจกรรมล่าสุด...</div></div>`;
+
+    onValue(ref(db, "users"), (snap) => {
+      const data = snap.val() || {};
+      allUsers = Object.values(data).sort((a, b) => new Date(b.lastLogin || 0) - new Date(a.lastLogin || 0));
+      renderAdminView();
     });
 
     onValue(ref(db, "presence"), (snap) => {
       const data = snap.val() || {};
-      const onlineUsers = Object.values(data);
-      const onlineCountEl = document.getElementById("admin-online-count");
-
-      if (onlineCountEl) onlineCountEl.textContent = `${onlineUsers.length} คน`;
-
-      if (onlineEl) {
-        if (!onlineUsers.length) {
-          onlineEl.innerHTML = '<div class="empty-msg">ตอนนี้ยังไม่มีคนออนไลน์</div>';
-          return;
-        }
-
-        onlineEl.innerHTML = onlineUsers.map((u) => `
-          <div class="admin-user-card">
-            <div class="admin-user-main">
-              ${u.photoURL ? `<img class="admin-avatar" src="${u.photoURL}" alt="">` : `<div class="admin-avatar admin-avatar-fallback">🟢</div>`}
-              <div>
-                <div class="admin-name">${u.displayName || "ไม่มีชื่อ"}</div>
-                <div class="admin-email">${u.email || "-"}</div>
-              </div>
-            </div>
-            <div class="admin-meta">
-              <div><strong>สถานะ:</strong> ออนไลน์</div>
-              <div><strong>เวลา:</strong> ${u.t ? new Date(u.t).toLocaleString("th-TH") : "-"}</div>
-            </div>
-          </div>
-        `).join("");
-      }
+      onlineUsers = Object.values(data).sort((a, b) => (b.t || 0) - (a.t || 0));
+      renderAdminView();
     });
 
     if (typeof window.initWritingReviewAdmin === "function") {
@@ -664,53 +816,267 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
 .ai-feedback-body { font-size:14px; line-height:1.85; color:var(--text); }
 
 
+
 /* ── ADMIN ── */
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 8px;
+.admin-hero-shell {
+  margin: 8px 0 18px;
 }
-.admin-stat-card {
-  background: #fff9f5;
+.admin-hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255,179,160,0.26), transparent 34%),
+    radial-gradient(circle at top right, rgba(196,181,253,0.22), transparent 30%),
+    linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,249,245,0.96));
   border: 1.5px solid var(--border);
-  border-radius: 16px;
-  padding: 18px;
+  border-radius: 28px;
+  padding: 24px 24px 22px;
+  box-shadow: 0 18px 42px rgba(200,130,120,0.09);
   text-align: center;
 }
-.admin-stat-number {
-  font-size: 28px;
+.admin-hero-card h2 {
+  font-size: 34px;
   font-weight: 900;
-  color: var(--peach2);
+  color: var(--text);
+  margin-bottom: 8px;
 }
-.admin-stat-label {
-  margin-top: 6px;
-  font-size: 13px;
+.admin-hero-card p {
+  max-width: 760px;
+  margin: 0 auto;
   color: var(--muted);
-  font-weight: 700;
-}
-.admin-mini-count {
   font-size: 14px;
-  font-weight: 800;
-  color: var(--mint2);
+  line-height: 1.8;
+}
+.admin-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #ffd8cf;
+  background: #fff4f0;
+  color: #cc6b4c;
+  font-size: 12px;
+  font-weight: 900;
   margin-bottom: 12px;
 }
-.admin-user-card {
-  background: #fff9f5;
+.admin-hero-chips {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.chip-peach { background:#fff3f0; color:#c85b34; border:1px solid #ffd4ca; }
+.chip-mint { background:#eafaf3; color:#1b8a5f; border:1px solid #b9ebd1; }
+.chip-lav { background:#f4efff; color:#6a4ec8; border:1px solid #d8cbff; }
+.admin-hero-deco {
+  position: absolute;
+  font-size: 22px;
+  opacity: 0.75;
+}
+.admin-hero-deco.deco-1 { left: 18px; top: 16px; }
+.admin-hero-deco.deco-2 { right: 24px; top: 18px; }
+.admin-hero-deco.deco-3 { right: 80px; bottom: 14px; }
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.admin-kpi {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
   border: 1.5px solid var(--border);
+  background: white;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(200,130,120,0.08);
+}
+.admin-kpi::after {
+  content:"";
+  position:absolute;
+  right:-30px;
+  top:-30px;
+  width:92px;
+  height:92px;
+  border-radius:50%;
+  background: rgba(255,255,255,0.36);
+}
+.admin-kpi.peach { background: linear-gradient(135deg, #fff7f3, #fff); }
+.admin-kpi.mint { background: linear-gradient(135deg, #f3fff9, #fff); }
+.admin-kpi.lav { background: linear-gradient(135deg, #f7f4ff, #fff); }
+.admin-kpi.yellow { background: linear-gradient(135deg, #fffdf2, #fff); }
+.admin-kpi.loading {
+  grid-column: 1/-1;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 800;
+}
+.admin-kpi-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.admin-kpi-title {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .4px;
+  color: #8e7d7d;
+  text-transform: uppercase;
+}
+.admin-kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 20px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(240,230,224,0.9);
+}
+.admin-kpi-number {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.admin-kpi-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.admin-kpi-foot {
+  margin-top: 12px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  color: #917f7f;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-kpi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff9f87;
+}
+.admin-showcase-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.admin-showcase-card {
+  background: rgba(255,255,255,0.78);
+  border: 1.5px solid var(--border);
+  border-radius: 28px;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(200,130,120,0.07);
+  backdrop-filter: blur(8px);
+}
+.admin-all-users-card {
+  margin-bottom: 24px;
+}
+.admin-section-top {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.admin-section-eyebrow {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .8px;
+  color: #b09494;
+  margin-bottom: 4px;
+}
+.admin-section-top h3 {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0;
+}
+.admin-count-pill {
+  display:inline-flex;
+  align-items:center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #eafaf3;
+  color: #1b8a5f;
+  border: 1.5px solid #b9ebd1;
+  font-size: 13px;
+  font-weight: 900;
+}
+.admin-mini-note {
+  display:inline-flex;
+  align-items:center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff7f4;
+  border: 1.5px solid #ffd8cf;
+  color: #b17868;
+  font-size: 12px;
+  font-weight: 800;
+}
+.admin-toolbar {
+  margin-bottom: 14px;
+}
+.admin-search {
+  width: 100%;
+  padding: 12px 16px;
   border-radius: 16px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  font-family: 'Nunito', sans-serif;
+}
+.admin-search:focus {
+  border-color: var(--peach2);
+}
+.admin-online-stack,
+.admin-recent-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-online-card,
+.admin-recent-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 14px;
+}
+.admin-online-card {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
 }
 .admin-user-main {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
 }
 .admin-avatar {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--border);
@@ -720,23 +1086,146 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:18px;
+  font-size:20px;
 }
 .admin-name {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
   color: var(--text);
 }
 .admin-email {
   font-size: 13px;
   color: var(--muted);
 }
+.admin-status-bubble {
+  flex-shrink: 0;
+  display:flex;
+  align-items:center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f2fff8;
+  border: 1.5px solid #b9ebd1;
+  color: #177d57;
+  font-size: 12px;
+  font-weight: 900;
+}
+.admin-status-dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#20bf7a;
+  box-shadow: 0 0 0 4px rgba(32,191,122,0.14);
+}
 .admin-meta {
   font-size: 12px;
   color: #7e6f6f;
   line-height: 1.7;
+  margin-top: 8px;
+}
+.admin-meta-row {
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.admin-tag {
+  display:inline-flex;
+  align-items:center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.admin-tag.peach { background:#fff3f0; color:#c04020; border:1px solid #ffd0c8; }
+.admin-tag.mint { background:#eafaf3; color:#1c8c5c; border:1px solid #b9ebd1; }
+.admin-tag.lav { background:#f4efff; color:#6549be; border:1px solid #d8cbff; }
+.admin-recent-time {
+  font-size: 12px;
+  color: #9e8c8c;
+  font-weight: 700;
+}
+.admin-user-grid {
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-user-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 22px;
+  padding: 16px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.admin-user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(200,130,120,0.10);
+}
+.admin-user-top {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+}
+.admin-user-right {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap: 6px;
+}
+.admin-user-bottom {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #eadcd6;
+}
+.admin-empty-fancy {
+  text-align:center;
+  color: var(--muted);
+  padding: 24px 16px;
+  background: #fff;
+  border: 1.5px dashed #ead8d1;
+  border-radius: 18px;
+}
+.admin-empty-fancy .emoji {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+.admin-soft-line {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd8cf, #f6f0ff, #dff7ee);
+  opacity: .9;
+  margin-top: 12px;
 }
 
+@media (max-width: 1100px) {
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-showcase-grid,
+  .admin-user-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .admin-hero-card {
+    padding: 20px 16px 18px;
+  }
+  .admin-hero-card h2 {
+    font-size: 28px;
+  }
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-section-top {
+    flex-direction: column;
+  }
+  .admin-online-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 /* ── WRITING REVIEW UI ── */
 .admin-review-wrap { margin-top: 24px; }
 .admin-review-header { text-align: center; margin: 10px 0 18px; }
@@ -1147,31 +1636,70 @@ body { font-family: 'Nunito', sans-serif; background: #fff9f5; min-height: 100vh
   <!-- ═══════════════════════════════════════════════
        ADMIN PANEL
   ═══════════════════════════════════════════════ -->
-  <div id="admin-panel" style="display:none">
-    <div class="write-intro">
-      <h2>👩‍🏫 Admin Dashboard</h2>
-      <p>ดูรายชื่อผู้เรียน การเข้าใช้งาน และสถานะออนไลน์</p>
+  
+<div id="admin-panel" style="display:none">
+    <div class="admin-hero-shell">
+      <div class="admin-hero-card">
+        <div class="admin-hero-deco deco-1">🌸</div>
+        <div class="admin-hero-deco deco-2">✨</div>
+        <div class="admin-hero-deco deco-3">🧁</div>
+        <div class="admin-hero-badge">👩‍🏫 Teacher Space</div>
+        <h2>Admin Dashboard</h2>
+        <p>ดูภาพรวมผู้เรียน การเข้าใช้งาน งานที่ต้องตรวจ และบรรยากาศห้องเรียนแบบน่ารัก ๆ ในหน้าเดียว</p>
+        <div class="admin-hero-chips">
+          <span class="admin-chip chip-peach">🫶 ดูง่าย</span>
+          <span class="admin-chip chip-mint">⚡ realtime</span>
+          <span class="admin-chip chip-lav">🌷 cute mode</span>
+        </div>
+      </div>
     </div>
 
-    <div class="admin-grid">
-      <div class="prompt-card">
-        <div class="prompt-label">ภาพรวม</div>
-        <div id="admin-summary"></div>
-      </div>
+    <div class="admin-kpi-grid" id="admin-summary">
+      <div class="admin-kpi loading">กำลังโหลด...</div>
+    </div>
 
-      <div class="prompt-card">
-        <div class="prompt-label">ออนไลน์ตอนนี้</div>
-        <div id="admin-online-count" class="admin-mini-count">0 คน</div>
+    <div class="admin-showcase-grid">
+      <div class="admin-showcase-card">
+        <div class="admin-section-top">
+          <div>
+            <div class="admin-section-eyebrow">ONLINE LOUNGE</div>
+            <h3>ห้องเรียนตอนนี้</h3>
+          </div>
+          <div id="admin-online-count" class="admin-count-pill">0 คน</div>
+        </div>
         <div id="admin-online-list"></div>
       </div>
 
-      <div class="prompt-card" style="grid-column:1/-1;">
-        <div class="prompt-label">รายชื่อผู้ใช้งานทั้งหมด</div>
-        <div id="admin-user-list"></div>
+      <div class="admin-showcase-card">
+        <div class="admin-section-top">
+          <div>
+            <div class="admin-section-eyebrow">RECENT ACTIVITY</div>
+            <h3>ความเคลื่อนไหวล่าสุด</h3>
+          </div>
+          <div class="admin-mini-note">อัปเดตอัตโนมัติ</div>
+        </div>
+        <div id="admin-recent-list"></div>
       </div>
     </div>
 
+    <div class="admin-showcase-card admin-all-users-card">
+      <div class="admin-section-top">
+        <div>
+          <div class="admin-section-eyebrow">STUDENT DIRECTORY</div>
+          <h3>รายชื่อผู้ใช้งานทั้งหมด</h3>
+        </div>
+        <div id="admin-active-hint" class="admin-mini-note">กำลังเตรียมข้อมูล...</div>
+      </div>
+
+      <div class="admin-toolbar">
+        <input id="admin-user-search" class="admin-search" placeholder="🔎 ค้นหาชื่อ หรือ email นักเรียน..." />
+      </div>
+
+      <div id="admin-user-list" class="admin-user-grid"></div>
+    </div>
+
     <div id="admin-review-panel" class="admin-review-wrap">
+
       <div class="admin-review-header">
         <h2>✍️ มุมตรวจงานครู</h2>
         <p>ตรวจประโยคและเรียงความของนักเรียนแบบน่ารัก ๆ ได้ในหน้าเดียว</p>
